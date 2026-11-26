@@ -1,0 +1,3402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job & Ausbildung Application Tracker</title>
+  <style>
+    :root {
+      --bg: #0c0e13;
+      --surface: #141720;
+      --surface-hover: #191d28;
+      --surface-modal: #141720;
+      --col-bg: rgba(255, 255, 255, 0.015);
+      --border: rgba(255, 255, 255, 0.07);
+      --border-hover: rgba(196, 181, 253, 0.28);
+
+      --text: #eceef4;
+      --text-secondary: #9aa1b3;
+      --text-muted: #5d6477;
+
+      --accent: #c4b5fd;
+      --accent-soft: rgba(196, 181, 253, 0.11);
+      --ausbildung-accent: #7cc4d9;
+      --ausbildung-soft: rgba(124, 196, 217, 0.11);
+
+      /* 7-segment pastel progress scale */
+      --s1: #e08e8e; /* 15% */
+      --s2: #e5ac83; /* 30% */
+      --s3: #e3c878; /* 45% */
+      --s4: #b5d182; /* 60% */
+      --s5: #88c999; /* 75% */
+      --s6: #6ec2a8; /* 90% */
+      --s7: #5bb89a; /* 100% */
+      --scheduled: #a78bfa; /* 35% Scheduled in Gmail */
+      --auto-reply: #7cc4d9; /* Auto-confirmation */
+      --rejected: #636a7a;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", "Segoe UI", sans-serif;
+      --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 25% -10%, rgba(196, 181, 253, 0.055), transparent 45%),
+        radial-gradient(circle at 78% -10%, rgba(124, 196, 217, 0.05), transparent 45%);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      padding: 22px 26px 64px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1780px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-row-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .title-area {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .title-area h1 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .demo-badge {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(196, 181, 253, 0.25);
+      color: var(--accent);
+    }
+
+    .stats-label {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .sync-tag {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .header-row-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .controls-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .controls-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .lang-switch {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .lang-btn:hover {
+      color: var(--text);
+    }
+
+    .lang-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .search-input {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 6px 12px;
+      width: 230px;
+      outline: none;
+      transition: border-color 0.15s, width 0.2s;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-input:focus {
+      border-color: var(--border-hover);
+      width: 280px;
+    }
+
+    .action-pill-btn {
+      background: var(--accent-soft);
+      border: 1px solid rgba(196, 181, 253, 0.24);
+      color: var(--accent);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 6px 13px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+
+    .action-pill-btn:hover {
+      background: rgba(196, 181, 253, 0.19);
+      border-color: rgba(196, 181, 253, 0.4);
+    }
+
+    .action-pill-btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .action-pill-btn.secondary {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .action-pill-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .gear-btn {
+      width: 31px;
+      height: 31px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .gear-btn:hover {
+      color: var(--text);
+      border-color: var(--border-hover);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    @keyframes spinLoop {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spinning svg {
+      animation: spinLoop 0.8s linear infinite;
+    }
+
+    .util-link {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 5px 7px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+
+    .util-link:hover {
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Full-width two-column workspace: Full-Time Jobs vs. Ausbildung */
+    .columns-board {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .board-column {
+      background: var(--col-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .column-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .col-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .col-dot.work {
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(196, 181, 253, 0.45);
+    }
+
+    .col-dot.ausbildung {
+      background: var(--ausbildung-accent);
+      box-shadow: 0 0 10px rgba(124, 196, 217, 0.45);
+    }
+
+    .column-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .column-count {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+
+    .col-add-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .col-add-btn:hover {
+      color: var(--text);
+      border-color: var(--border-hover);
+      background: var(--accent-soft);
+    }
+
+    .col-add-btn.ausbildung-btn:hover {
+      border-color: rgba(124, 196, 217, 0.35);
+      background: var(--ausbildung-soft);
+    }
+
+    /* Application cards */
+    .jobs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .job-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 13px 15px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      transition: background 0.16s ease, border-color 0.16s ease, opacity 0.2s ease;
+      cursor: pointer;
+    }
+
+    .job-row:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-hover);
+    }
+
+    .job-row.ausbildung-card:hover {
+      border-color: rgba(124, 196, 217, 0.32);
+    }
+
+    .job-row.is-rejected {
+      opacity: 0.44;
+    }
+
+    .job-row.is-rejected:hover {
+      opacity: 0.82;
+    }
+
+    .job-row.is-rejected .company-name {
+      text-decoration: line-through;
+      color: var(--text-secondary);
+    }
+
+    .card-top-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .card-title-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .row-code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .company-name {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .note-indicator {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.8;
+      flex-shrink: 0;
+    }
+
+    .card-top-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .card-bottom-line {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .identity-sub {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .role-line {
+      color: var(--text-secondary);
+      font-size: 12.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .snippet-line {
+      color: var(--text-muted);
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Status / activity pulse badges */
+    .pulse-tag {
+      display: inline-block;
+      max-width: 195px;
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border: 1px solid transparent;
+    }
+
+    .pulse-tag.hr-replied {
+      background: rgba(136, 201, 153, 0.11);
+      color: var(--s5);
+      border-color: rgba(136, 201, 153, 0.22);
+    }
+
+    .pulse-tag.action-due {
+      background: rgba(229, 172, 131, 0.12);
+      color: var(--s2);
+      border-color: rgba(229, 172, 131, 0.26);
+    }
+
+    .pulse-tag.waiting {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-secondary);
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .pulse-tag.auto-reply {
+      background: rgba(124, 196, 217, 0.11);
+      color: var(--auto-reply);
+      border-color: rgba(124, 196, 217, 0.25);
+    }
+
+    .pulse-tag.scheduled {
+      background: rgba(167, 139, 250, 0.13);
+      color: var(--scheduled);
+      border-color: rgba(167, 139, 250, 0.3);
+    }
+
+    .pulse-tag.rejected {
+      background: transparent;
+      color: var(--text-muted);
+      padding-right: 2px;
+    }
+
+    /* 7-segment pastel progress bar */
+    .stage-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      cursor: default;
+      width: 155px;
+      flex-shrink: 0;
+    }
+
+    .stage-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      gap: 6px;
+    }
+
+    .stage-label {
+      font-weight: 500;
+      transition: color 0.2s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stage-pct {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .bar-segments {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      height: 5px;
+      align-items: center;
+    }
+
+    .bar-seg {
+      height: 100%;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.06);
+      cursor: pointer;
+      transition: transform 0.12s ease, background-color 0.2s ease;
+    }
+
+    .bar-seg:hover {
+      transform: scaleY(1.65);
+      background: rgba(255, 255, 255, 0.24);
+    }
+
+    /* Subtle action icons */
+    .row-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 2px;
+      opacity: 0.45;
+      transition: opacity 0.15s ease;
+    }
+
+    .job-row:hover .row-actions {
+      opacity: 1;
+    }
+
+    .icon-btn {
+      width: 25px;
+      height: 25px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      text-decoration: none;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text);
+    }
+
+    .icon-btn.delete-btn:hover {
+      background: rgba(224, 142, 142, 0.15);
+      color: var(--s1);
+    }
+
+    .icon-btn svg {
+      width: 13px;
+      height: 13px;
+      stroke-width: 1.75;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 15, 0.76);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: var(--surface-modal);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 680px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55);
+      transform: translateY(8px);
+      transition: transform 0.2s ease;
+      overflow: hidden;
+    }
+
+    .modal-card.compact {
+      max-width: 500px;
+    }
+
+    .modal-backdrop.open .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-top {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .modal-company {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-role {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+    }
+
+    .modal-meta-links {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+    }
+
+    .meta-action {
+      color: var(--accent);
+      background: none;
+      border: none;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .meta-action:hover {
+      text-decoration: underline;
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    .copy-inline {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 11.5px;
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .copy-inline:hover {
+      text-decoration: underline;
+    }
+
+    .clean-input, .clean-select, .clean-textarea {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+
+    .clean-input:focus, .clean-select:focus, .clean-textarea:focus {
+      border-color: var(--border-hover);
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stage-radio-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .cat-radio-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .stage-radio-btn {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+
+    .stage-radio-btn.active {
+      background: var(--accent-soft);
+      border-color: rgba(196, 181, 253, 0.35);
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .stage-radio-btn.active.ausbildung-active {
+      background: var(--ausbildung-soft);
+      border-color: rgba(124, 196, 217, 0.35);
+      color: var(--ausbildung-accent);
+    }
+
+    .timeline-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .timeline-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12.5px;
+    }
+
+    .snippet-box {
+      background: rgba(196, 181, 253, 0.045);
+      border: 1px solid rgba(196, 181, 253, 0.14);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+      display: none;
+    }
+
+    .snippet-box.visible {
+      display: block;
+    }
+
+    .quick-touch-btns {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .mini-chip-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 11.5px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .mini-chip-btn:hover {
+      color: var(--text);
+      border-color: var(--border-hover);
+      background: var(--accent-soft);
+    }
+
+    .letter-editor {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.55;
+      color: #d6dae6;
+      resize: vertical;
+      min-height: 165px;
+      outline: none;
+      width: 100%;
+    }
+
+    .letter-editor:focus {
+      border-color: var(--border-hover);
+    }
+
+    .notes-area {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      resize: vertical;
+      min-height: 58px;
+      outline: none;
+      width: 100%;
+    }
+
+    .notes-area:focus {
+      border-color: var(--border-hover);
+    }
+
+    .disclosure-toggle {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 12.5px;
+      cursor: pointer;
+      padding: 2px 0;
+      text-align: left;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .disclosure-toggle:hover {
+      color: var(--accent);
+    }
+
+    .extra-fields {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      padding-top: 4px;
+    }
+
+    .extra-fields.open {
+      display: flex;
+    }
+
+    .hint-note {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      line-height: 1.45;
+    }
+
+    .modal-bottom {
+      padding: 14px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.16);
+    }
+
+    .modal-left-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .subtle-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 7px 13px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .subtle-btn:hover {
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .subtle-btn.danger:hover {
+      color: var(--s1);
+      border-color: rgba(224, 142, 142, 0.35);
+      background: rgba(224, 142, 142, 0.08);
+    }
+
+    .primary-btn {
+      background: var(--accent-soft);
+      border: 1px solid rgba(196, 181, 253, 0.3);
+      color: var(--accent);
+      padding: 7px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .primary-btn:hover {
+      background: rgba(196, 181, 253, 0.22);
+    }
+
+    /* Toast notification */
+    .toast-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1b1f2b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text);
+      padding: 9px 18px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 200;
+    }
+
+    .toast-bar.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    .toast-undo {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .toast-undo:hover {
+      text-decoration: underline;
+    }
+
+    .empty-box {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--text-muted);
+      font-size: 13px;
+      display: none;
+    }
+
+    @media (max-width: 1120px) {
+      .columns-board {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 16px 12px 56px;
+      }
+      .card-bottom-line {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .stage-cell {
+        width: 100%;
+      }
+      .row-actions {
+        opacity: 1;
+      }
+      .form-grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header class="header-wrap">
+      <div class="header-row-top">
+        <div class="title-area">
+          <h1 id="appTitle">Application Tracker</h1>
+          <span class="demo-badge">DEMO · GMAIL SYNC</span>
+          <span class="stats-label" id="statsText">Jobs: 5 active (1 rejected) · Ausbildung: 3 active</span>
+          <span class="sync-tag" id="syncTag">synced: demo data</span>
+        </div>
+
+        <div class="lang-switch" id="langSwitch" aria-label="Language">
+          <button type="button" class="lang-btn active" data-lang="en">EN</button>
+          <button type="button" class="lang-btn" data-lang="de">DE</button>
+          <button type="button" class="lang-btn" data-lang="ua">UA</button>
+        </div>
+      </div>
+
+      <div class="header-row-controls">
+        <div class="controls-left">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search all applications...">
+
+          <button type="button" class="action-pill-btn secondary" id="btnRefresh">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 3v5h-5"/>
+            </svg>
+            <span id="lblRefresh">Refresh</span>
+          </button>
+
+          <button type="button" class="gear-btn" id="btnOpenSettings" title="Gmail Sync Settings">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="3"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.79 1 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+            </svg>
+          </button>
+
+          <button type="button" class="action-pill-btn" id="btnOpenAdd">+ Add</button>
+        </div>
+
+        <div class="controls-right">
+          <button type="button" class="util-link" id="btnImport">Import</button>
+          <button type="button" class="util-link" id="btnExport">Export</button>
+          <button type="button" class="util-link" id="btnReset">Reset</button>
+          <input type="file" id="importFileInput" accept=".json" style="display:none">
+        </div>
+      </div>
+    </header>
+
+    <!-- Full-screen two-column layout -->
+    <main class="columns-board">
+      <!-- Left column: Full-Time Jobs -->
+      <section class="board-column" aria-label="Full-Time Jobs">
+        <div class="column-header">
+          <div class="column-title-group">
+            <span class="col-dot work"></span>
+            <h2 class="column-title" id="colWorkTitle">Jobs · Full-Time</h2>
+            <span class="column-count" id="colWorkCount">6</span>
+          </div>
+          <button type="button" class="col-add-btn" id="btnAddWork">+ Job</button>
+        </div>
+        <div class="jobs-list" id="workList"></div>
+        <div class="empty-box" id="emptyWorkBox">No entries found</div>
+      </section>
+
+      <!-- Right column: Ausbildung -->
+      <section class="board-column" aria-label="Ausbildung">
+        <div class="column-header">
+          <div class="column-title-group">
+            <span class="col-dot ausbildung"></span>
+            <h2 class="column-title" id="colAusbildungTitle">Ausbildung</h2>
+            <span class="column-count" id="colAusbildungCount">3</span>
+          </div>
+          <button type="button" class="col-add-btn ausbildung-btn" id="btnAddAusbildung">+ Ausbildung</button>
+        </div>
+        <div class="jobs-list" id="ausbildungList"></div>
+        <div class="empty-box" id="emptyAusbildungBox">No entries found</div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Application Detail Modal -->
+  <div class="modal-backdrop" id="detailModal">
+    <div class="modal-card">
+      <div class="modal-top">
+        <div style="flex: 1; min-width: 0;">
+          <div class="modal-company">
+            <span id="mCode" style="font-family: var(--font-mono); color: var(--text-muted); font-weight: 400;">#01</span>
+            <span id="mCompany">Company</span>
+          </div>
+          <div class="modal-role" id="mRole">Role</div>
+          <div class="modal-meta-links">
+            <span id="mLocation">Dresden</span>
+            <span>·</span>
+            <button type="button" class="meta-action" id="mCopyEmail">
+              <span id="mEmailText">—</span>
+            </button>
+            <span>·</span>
+            <a href="#" target="_blank" rel="noopener noreferrer" class="meta-action" id="mUrl">Job page ↗</a>
+          </div>
+        </div>
+        <button type="button" class="icon-btn" id="mClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="timeline-box">
+          <div class="timeline-row">
+            <span style="color: var(--text-secondary);"><span id="lblMailStatus">Mail status:</span> <strong id="mSmartSummary" style="color: var(--text); font-weight: 500;">—</strong></span>
+            <div class="quick-touch-btns">
+              <button type="button" class="mini-chip-btn" id="btnTouchMe">✓ Followed up today</button>
+              <button type="button" class="mini-chip-btn" id="btnTouchHr">✓ HR replied today</button>
+            </div>
+          </div>
+          <div class="snippet-box" id="mSnippetBox"></div>
+          <div class="form-grid-2">
+            <div class="field-block">
+              <div class="field-header"><span id="lblAppliedDate">Applied date</span></div>
+              <input type="date" class="clean-input" id="mAppliedDate">
+            </div>
+            <div class="field-block">
+              <div class="field-header"><span id="lblLastContactDate">Last contact</span></div>
+              <input type="date" class="clean-input" id="mLastContactDate">
+            </div>
+          </div>
+        </div>
+
+        <div class="field-block">
+          <div class="field-header"><span id="lblNotes">Notes / Next step</span></div>
+          <textarea class="notes-area" id="mNotes"></textarea>
+        </div>
+
+        <button type="button" class="disclosure-toggle" id="btnToggleDetailEdit">▸ Edit company, e-mail, column or cover letter</button>
+        <div class="extra-fields" id="detailEditWrap">
+          <div class="form-grid-2">
+            <div class="field-block">
+              <div class="field-header"><span id="lblEditCompany">Company</span></div>
+              <input type="text" class="clean-input" id="mEditCompany">
+            </div>
+            <div class="field-block">
+              <div class="field-header"><span>E-mail / Domain for Gmail Sync</span></div>
+              <input type="text" class="clean-input" id="mEditEmail" placeholder="jobs@example.de">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="field-block">
+              <div class="field-header"><span id="lblEditRole">Role</span></div>
+              <input type="text" class="clean-input" id="mEditRole">
+            </div>
+            <div class="field-block">
+              <div class="field-header"><span id="lblEditCategory">Column</span></div>
+              <select class="clean-select" id="mEditCategory">
+                <option value="work" id="optCatWork">Jobs · Full-Time</option>
+                <option value="ausbildung" id="optCatAusbildung">Ausbildung</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="field-header">
+              <span id="lblBetreff">Subject (Betreff)</span>
+              <button type="button" class="copy-inline" id="btnCopyBetreff">Copy subject</button>
+            </div>
+            <input type="text" class="clean-input" id="mBetreff">
+          </div>
+
+          <div class="field-block">
+            <div class="field-header">
+              <span id="lblLetter">Cover Letter (Anschreiben)</span>
+              <button type="button" class="copy-inline" id="btnCopyLetter">Copy text</button>
+            </div>
+            <textarea class="letter-editor" id="mLetter"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-bottom">
+        <div class="modal-left-actions">
+          <button type="button" class="subtle-btn danger" id="mDeleteBtn">Delete</button>
+          <button type="button" class="subtle-btn" id="mRejectBtn">Mark rejected</button>
+        </div>
+        <button type="button" class="primary-btn" id="mDoneBtn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add New Application Modal -->
+  <div class="modal-backdrop" id="addModal">
+    <div class="modal-card compact">
+      <div class="modal-top">
+        <div>
+          <div class="modal-company" id="lblAddTitle">New Application</div>
+          <div class="modal-role" id="lblAddSubtitle">Choose column (Jobs or Ausbildung) and enter company</div>
+        </div>
+        <button type="button" class="icon-btn" id="addClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="addForm" class="modal-body">
+        <div class="field-block">
+          <div class="field-header"><span id="lblNewCategory">Column *</span></div>
+          <div class="cat-radio-group" id="newCategoryGroup">
+            <button type="button" class="stage-radio-btn active" data-cat="work" id="lblCatBtnWork">Jobs · Full-Time</button>
+            <button type="button" class="stage-radio-btn" data-cat="ausbildung" id="lblCatBtnAusbildung">Ausbildung</button>
+          </div>
+        </div>
+
+        <div class="field-block">
+          <div class="field-header"><span id="lblNewCompany">Company *</span></div>
+          <input type="text" class="clean-input" id="newCompany" required>
+        </div>
+
+        <div class="field-block">
+          <div class="field-header"><span id="lblNewRole">Role *</span></div>
+          <input type="text" class="clean-input" id="newRole" required>
+        </div>
+
+        <div class="field-block">
+          <div class="field-header"><span id="lblNewStage">Status</span></div>
+          <div class="stage-radio-group" id="newStageGroup">
+            <button type="button" class="stage-radio-btn" data-val="2" id="lblStageBtn2">Planned</button>
+            <button type="button" class="stage-radio-btn active" data-val="3" id="lblStageBtn3">Applied</button>
+            <button type="button" class="stage-radio-btn" data-val="4" id="lblStageBtn4">Replied</button>
+          </div>
+        </div>
+
+        <div class="field-block">
+          <div class="field-header"><span id="lblNewNotes">Comment (optional)</span></div>
+          <input type="text" class="clean-input" id="newNotes">
+        </div>
+
+        <button type="button" class="disclosure-toggle" id="btnToggleExtraAdd">▸ Optional fields (e-mail, URL, cover letter)</button>
+        <div class="extra-fields" id="extraAddFields">
+          <div class="form-grid-2">
+            <div class="field-block">
+              <div class="field-header"><span>E-mail</span></div>
+              <input type="text" class="clean-input" id="newEmail" placeholder="jobs@example.de">
+            </div>
+            <div class="field-block">
+              <div class="field-header"><span id="lblNewUrl">URL</span></div>
+              <input type="url" class="clean-input" id="newUrl" placeholder="https://example.de/careers">
+            </div>
+          </div>
+          <div class="field-block">
+            <div class="field-header"><span id="lblNewLetter">Cover Letter</span></div>
+            <textarea class="letter-editor" id="newLetter" style="min-height: 110px;"></textarea>
+          </div>
+        </div>
+      </form>
+
+      <div class="modal-bottom">
+        <button type="button" class="subtle-btn" id="addCancelBtn">Cancel</button>
+        <button type="submit" form="addForm" class="primary-btn" id="addSubmitBtn">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gmail Sync Settings Modal -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal-card compact">
+      <div class="modal-top">
+        <div>
+          <div class="modal-company" id="lblSettingsTitle">Gmail Sync Settings</div>
+          <div class="modal-role" id="lblSettingsSubtitle">Google Apps Script Web App Endpoint</div>
+        </div>
+        <button type="button" class="icon-btn" id="settingsClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="hint-note" id="lblSettingsHint">
+          Leave empty to run in local demo mode, or connect your own Google Apps Script Web App endpoint to auto-detect replies, auto-confirmations, rejections, and scheduled emails from Gmail.
+        </div>
+        <div class="field-block">
+          <div class="field-header"><span>Web App URL</span></div>
+          <input type="url" class="clean-input" id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+        <div class="field-block">
+          <div class="field-header"><span>API Key</span></div>
+          <input type="password" class="clean-input" id="cfgKey" placeholder="your_secret_api_key">
+        </div>
+      </div>
+
+      <div class="modal-bottom">
+        <button type="button" class="subtle-btn" id="cfgResetBtn">Clear</button>
+        <button type="button" class="primary-btn" id="cfgSaveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast bar -->
+  <div class="toast-bar" id="toastBar">
+    <span id="toastText">Updated</span>
+    <button type="button" class="toast-undo" id="toastUndo" style="display: none;">Undo</button>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'job_tracker_public_demo_v1';
+    const SYNC_DATE_KEY = 'job_tracker_public_last_sync_v1';
+    const LANG_KEY = 'job_tracker_public_lang_v1';
+    const SYNC_CFG_KEY = 'job_tracker_public_sync_cfg_v1';
+    const GMAIL_DATE_CUTOFF = 'after:2026/10/01';
+
+    // Public safe defaults: credentials are stored only in user's browser localStorage
+    const DEFAULT_SYNC_CFG = {
+      url: '',
+      key: ''
+    };
+
+    const STAGE_META = {
+      1: { pct: 15, color: 'var(--s1)' },
+      2: { pct: 30, color: 'var(--s2)' },
+      3: { pct: 45, color: 'var(--s3)' },
+      4: { pct: 60, color: 'var(--s4)' },
+      5: { pct: 75, color: 'var(--s5)' },
+      6: { pct: 90, color: 'var(--s6)' },
+      7: { pct: 100, color: 'var(--s7)' }
+    };
+
+    const I18N = {
+      en: {
+        appTitle: 'Application Tracker',
+        searchPlaceholder: 'Search all applications...',
+        refresh: 'Refresh',
+        refreshing: 'Syncing...',
+        addBtn: '+ Add',
+        importBtn: 'Import',
+        exportBtn: 'Export',
+        resetBtn: 'Reset',
+        emptyBox: 'No entries found',
+        syncPrefix: 'synced',
+        demoSyncStamp: 'demo data',
+        colWorkTitle: 'Jobs · Full-Time',
+        colAusbildungTitle: 'Ausbildung',
+        addWorkShort: '+ Job',
+        addAusbildungShort: '+ Ausbildung',
+        statsText: (wAct, wRej, aAct, aRej) => `Jobs: ${wAct} active (${wRej} rejected) · Ausbildung: ${aAct} active`,
+        stages: {
+          1: 'Not Applied',
+          2: 'Planned',
+          3: 'Applied',
+          4: 'Replied',
+          5: 'In Review',
+          6: 'Interview',
+          7: 'Offer'
+        },
+        rejectedLabel: 'Rejected',
+        scheduledGmailStage: 'Scheduled in Gmail',
+        autoAddedScheduledNote: (at) => `Auto-added from Gmail (Scheduled in Gmail${at ? ' · ' + at : ''}).`,
+        pulse: {
+          rejectedBadge: (d) => `Rejected${d ? ' · ' + d : ''}`,
+          rejectedAdvice: (d) => `Rejection received${d ? ' on ' + d : ''}.`,
+          stage1Badge: 'Draft',
+          stage1Advice: 'Application not sent yet — prepare your cover letter and apply.',
+          stage2Badge: 'Ready to send',
+          stage2Advice: 'Application is ready — review details and submit.',
+          scheduledBadge: (at) => `Scheduled in Gmail${at ? ' · ' + at : ''}`,
+          scheduledAdvice: (at) => `Email is queued in Gmail Scheduled Send${at ? ' (' + at + ')' : ''}. Will switch to Applied automatically once sent.`,
+          autoReplyBadge: 'Received · Auto-reply',
+          autoReplyAdvice: (d, when) => `Automatic receipt confirmation received${d ? ' on ' + d : ''}${when ? ' (' + when + ')' : ''}. No live HR reply yet.`,
+          interviewBadge: 'Interview / Offer',
+          interviewAdvice: 'Active interview stage — prepare thoroughly!',
+          hrSilenceBadge: (days) => `${days}d silence · follow up`,
+          hrSilenceAdvice: (days, d) => `HR last replied ${days} days ago (${d}). Consider a polite follow-up.`,
+          hrRepliedToday: 'HR replied today',
+          hrRepliedYesterday: 'HR replied yesterday',
+          hrRepliedDays: (days) => `HR replied · ${days}d ago`,
+          hrRepliedAdvice: (d, when) => `Last HR contact on ${d} (${when}). Application in progress.`,
+          remindedWaitBadge: (days) => `Followed up · ${days}d`,
+          remindedWaitAdvice: (d, days) => `Follow-up sent on ${d} (${days} days ago). Waiting for reply.`,
+          silenceDueBadge: (days) => `${days}d silence · follow up`,
+          silenceDueAdvice: (days, d) => `${days} days since applying (${d}). Time for a brief follow-up.`,
+          sentToday: 'Sent today',
+          sentYesterday: 'Sent yesterday',
+          todayWord: 'today',
+          yesterdayWord: 'yesterday',
+          daysAgoWord: (days) => `${days}d ago`,
+          waitingBadge: (days) => `Waiting · ${days}d`,
+          waitingAdvice: (d, when) => `Applied on ${d} (${when}). Giving HR time to review.`
+        },
+        detail: {
+          noEmail: 'No e-mail',
+          openUrl: 'Job page ↗',
+          mailStatus: 'Mail status:',
+          touchMe: '✓ Followed up today',
+          touchHr: '✓ HR replied today',
+          appliedDate: 'Applied date',
+          lastContactDate: 'Last contact',
+          notes: 'Notes / Next step',
+          notesPlaceholder: 'Short note: HR response, next action, details...',
+          showEdit: '▸ Edit company, e-mail, column or cover letter',
+          hideEdit: '▾ Hide field & letter editor',
+          editCompany: 'Company',
+          editRole: 'Role',
+          editCategory: 'Column',
+          betreff: 'Subject (Betreff)',
+          copyBetreff: 'Copy subject',
+          letter: 'Cover Letter (Anschreiben)',
+          copyLetter: 'Copy text',
+          deleteBtn: 'Delete',
+          markReject: 'Mark rejected',
+          unmarkReject: 'Undo rejection',
+          doneBtn: 'Done',
+          lastMailPrefix: 'Latest email:'
+        },
+        add: {
+          title: 'New Application',
+          subtitle: 'Choose column (Jobs or Ausbildung) and enter company',
+          category: 'Column *',
+          company: 'Company *',
+          companyPh: 'e.g. Acme Cloud GmbH',
+          role: 'Role *',
+          rolePh: 'e.g. Junior AI Automation Engineer (m/w/d)',
+          stage: 'Status',
+          s2: 'Planned',
+          s3: 'Applied',
+          s4: 'Replied',
+          notes: 'Comment (optional)',
+          notesPh: 'Short note...',
+          extraClosed: '▸ Optional fields (e-mail, URL, cover letter)',
+          extraOpen: '▾ Optional fields (e-mail, URL, cover letter)',
+          url: 'URL',
+          letter: 'Cover Letter',
+          letterPh: 'Letter text...',
+          cancel: 'Cancel',
+          submit: 'Add'
+        },
+        settings: {
+          title: 'Gmail Sync Settings',
+          subtitle: 'Google Apps Script Web App Endpoint',
+          hint: 'Leave empty to run in local demo mode, or connect your own Google Apps Script Web App endpoint to auto-detect replies, auto-confirmations, rejections, and scheduled emails from Gmail.',
+          resetDefault: 'Clear',
+          save: 'Save',
+          savedToast: 'Sync settings saved'
+        },
+        toasts: {
+          copied: (v) => `Copied: ${v}`,
+          copiedSubject: 'Subject copied',
+          copiedLetter: 'Cover letter copied',
+          deleted: (code, comp) => `Removed #${code} ${comp}`,
+          undo: 'Undo',
+          added: (code, comp) => `Added #${code} ${comp}`,
+          touchedMe: 'Logged follow-up today',
+          touchedHr: 'Logged HR reply today',
+          syncOk: (n) => `Gmail synced (${n} matches)`,
+          syncOkWithNew: (n, added) => `Gmail synced (${n} matches · +${added} scheduled)`,
+          demoSyncInfo: 'Demo mode: local timers recalculated (connect Gmail Web App in Settings)',
+          syncErr: 'Could not reach Gmail API — recalculated locally',
+          savedJson: 'JSON exported',
+          imported: (n) => `Imported ${n} applications`,
+          importErr: 'Error reading JSON',
+          resetConfirm: (n) => `Restore demo list of ${n} applications?`,
+          resetDone: 'Demo list restored'
+        },
+        tooltips: {
+          note: 'Has note',
+          copyEmail: (e) => `Copy ${e}`,
+          openSite: 'Open website',
+          deleteRow: 'Delete application',
+          settings: 'Gmail Sync Settings'
+        }
+      },
+
+      de: {
+        appTitle: 'Application Tracker',
+        searchPlaceholder: 'Alle Bewerbungen durchsuchen...',
+        refresh: 'Aktualisieren',
+        refreshing: 'Synchronisiere...',
+        addBtn: '+ Hinzufügen',
+        importBtn: 'Import',
+        exportBtn: 'Export',
+        resetBtn: 'Zurücksetzen',
+        emptyBox: 'Keine Einträge gefunden',
+        syncPrefix: 'Stand',
+        demoSyncStamp: 'Demo-Daten',
+        colWorkTitle: 'Arbeit · Vollzeit',
+        colAusbildungTitle: 'Ausbildung',
+        addWorkShort: '+ Arbeit',
+        addAusbildungShort: '+ Ausbildung',
+        statsText: (wAct, wRej, aAct, aRej) => `Arbeit: ${wAct} aktiv (${wRej} Absagen) · Ausbildung: ${aAct} aktiv`,
+        stages: {
+          1: 'Nicht beworben',
+          2: 'Geplant',
+          3: 'Beworben',
+          4: 'Rückmeldung',
+          5: 'In Prüfung',
+          6: 'Gespräch',
+          7: 'Angebot'
+        },
+        rejectedLabel: 'Absage',
+        scheduledGmailStage: 'In Gmail geplant',
+        autoAddedScheduledNote: (at) => `Automatisch aus Gmail hinzugefügt (In Gmail geplant${at ? ' · ' + at : ''}).`,
+        pulse: {
+          rejectedBadge: (d) => `Absage${d ? ' · ' + d : ''}`,
+          rejectedAdvice: (d) => `Absage erhalten${d ? ' am ' + d : ''}.`,
+          stage1Badge: 'Entwurf',
+          stage1Advice: 'Bewerbung noch nicht versendet – Anschreiben vorbereiten und absenden.',
+          stage2Badge: 'Versandbereit',
+          stage2Advice: 'Bewerbung ist vorbereitet – Unterlagen prüfen und absenden.',
+          scheduledBadge: (at) => `In Gmail geplant${at ? ' · ' + at : ''}`,
+          scheduledAdvice: (at) => `E-Mail ist in Gmail zeitgesteuert geplant${at ? ' (' + at + ')' : ''}. Wechselt nach Versand automatisch auf „Beworben“.`,
+          autoReplyBadge: 'Eingegangen · Auto-Antwort',
+          autoReplyAdvice: (d, when) => `Automatische Eingangsbestätigung erhalten${d ? ' am ' + d : ''}${when ? ' (' + when + ')' : ''}. Noch keine persönliche HR-Antwort.`,
+          interviewBadge: 'Gespräch / Angebot',
+          interviewAdvice: 'Aktive Interviewphase – optimal auf das Gespräch vorbereiten!',
+          hrSilenceBadge: (days) => `${days} T. Funkstille · nachhaken`,
+          hrSilenceAdvice: (days, d) => `Letzte HR-Rückmeldung vor ${days} Tagen (${d}). Freundliche Nachfrage sinnvoll.`,
+          hrRepliedToday: 'HR-Antwort heute',
+          hrRepliedYesterday: 'HR-Antwort gestern',
+          hrRepliedDays: (days) => `HR-Antwort · vor ${days} T.`,
+          hrRepliedAdvice: (d, when) => `Letzter HR-Kontakt am ${d} (${when}). Bewerbung in Bearbeitung.`,
+          remindedWaitBadge: (days) => `Nachgefasst · ${days} T.`,
+          remindedWaitAdvice: (d, days) => `Nachfrage bereits am ${d} gesendet (vor ${days} Tagen). Weiter abwarten.`,
+          silenceDueBadge: (days) => `${days} T. ohne Antwort · nachfassen`,
+          silenceDueAdvice: (days, d) => `Seit Bewerbung am ${d} sind ${days} Tage vergangen. Kurzes Nachfassen empfohlen.`,
+          sentToday: 'Heute gesendet',
+          sentYesterday: 'Gestern gesendet',
+          todayWord: 'heute',
+          yesterdayWord: 'gestern',
+          daysAgoWord: (days) => `vor ${days} T.`,
+          waitingBadge: (days) => `Wartend · ${days} T.`,
+          waitingAdvice: (d, when) => `Beworben am ${d} (${when}). Noch ausreichend Prüfzeit für HR.`
+        },
+        detail: {
+          noEmail: 'Keine E-Mail',
+          openUrl: 'Stellenanzeige ↗',
+          mailStatus: 'E-Mail-Status:',
+          touchMe: '✓ Heute nachgefasst',
+          touchHr: '✓ HR-Antwort heute',
+          appliedDate: 'Bewerbungsdatum',
+          lastContactDate: 'Letzter Kontakt',
+          notes: 'Notizen / Nächster Schritt',
+          notesPlaceholder: 'Kurznotiz: Rückmeldung, Termin oder nächster Schritt...',
+          showEdit: '▸ Unternehmen, E-Mail, Spalte oder Anschreiben bearbeiten',
+          hideEdit: '▾ Bearbeitung ausblenden',
+          editCompany: 'Unternehmen',
+          editRole: 'Position',
+          editCategory: 'Spalte',
+          betreff: 'Betreffzeile',
+          copyBetreff: 'Betreff kopieren',
+          letter: 'Anschreiben',
+          copyLetter: 'Text kopieren',
+          deleteBtn: 'Löschen',
+          markReject: 'Als Absage markieren',
+          unmarkReject: 'Absage aufheben',
+          doneBtn: 'Fertig',
+          lastMailPrefix: 'Letzte E-Mail:'
+        },
+        add: {
+          title: 'Neue Bewerbung',
+          subtitle: 'Spalte (Arbeit oder Ausbildung) wählen und Firma eintragen',
+          category: 'Spalte *',
+          company: 'Unternehmen *',
+          companyPh: 'z. B. Acme Cloud GmbH',
+          role: 'Position *',
+          rolePh: 'z. B. Junior AI Automation Engineer (m/w/d)',
+          stage: 'Status',
+          s2: 'Geplant',
+          s3: 'Beworben',
+          s4: 'Rückmeldung',
+          notes: 'Kommentar (optional)',
+          notesPh: 'Kurze Notiz...',
+          extraClosed: '▸ Weitere Felder (E-Mail, Link, Anschreiben)',
+          extraOpen: '▾ Weitere Felder (E-Mail, Link, Anschreiben)',
+          url: 'Link',
+          letter: 'Anschreiben',
+          letterPh: 'Text des Anschreibens...',
+          cancel: 'Abbrechen',
+          submit: 'Hinzufügen'
+        },
+        settings: {
+          title: 'Gmail-Sync-Einstellungen',
+          subtitle: 'Google Apps Script Web-App-Endpunkt',
+          hint: 'Leer lassen für den lokalen Demo-Modus oder eigene Google Apps Script Web-App-URL eintragen, um Antworten, Eingangsbestätigungen, Absagen und geplante E-Mails aus Gmail zu synchronisieren.',
+          resetDefault: 'Leeren',
+          save: 'Speichern',
+          savedToast: 'Sync-Einstellungen gespeichert'
+        },
+        toasts: {
+          copied: (v) => `Kopiert: ${v}`,
+          copiedSubject: 'Betreff kopiert',
+          copiedLetter: 'Anschreiben kopiert',
+          deleted: (code, comp) => `Entfernt: #${code} ${comp}`,
+          undo: 'Rückgängig',
+          added: (code, comp) => `Hinzugefügt: #${code} ${comp}`,
+          touchedMe: 'Nachfassen für heute vermerkt',
+          touchedHr: 'HR-Rückmeldung für heute vermerkt',
+          syncOk: (n) => `Gmail synchronisiert (${n} Treffer)`,
+          syncOkWithNew: (n, added) => `Gmail synchronisiert (${n} Treffer · +${added} geplant)`,
+          demoSyncInfo: 'Demo-Modus: Zeitstempel lokal aktualisiert (Gmail-Endpoint in Einstellungen)',
+          syncErr: 'Gmail-API nicht erreichbar – lokal aktualisiert',
+          savedJson: 'JSON exportiert',
+          imported: (n) => `${n} Bewerbungen importiert`,
+          importErr: 'Fehler beim Lesen der JSON-Datei',
+          resetConfirm: (n) => `Demo-Liste mit ${n} Bewerbungen wiederherstellen?`,
+          resetDone: 'Demo-Liste wiederhergestellt'
+        },
+        tooltips: {
+          note: 'Notiz vorhanden',
+          copyEmail: (e) => `${e} kopieren`,
+          openSite: 'Website öffnen',
+          deleteRow: 'Bewerbung löschen',
+          settings: 'Gmail-Sync-Einstellungen'
+        }
+      },
+
+      ua: {
+        appTitle: 'Application Tracker',
+        searchPlaceholder: 'Пошук по всіх заявках...',
+        refresh: 'Оновити',
+        refreshing: 'Оновлення...',
+        addBtn: '+ Додати',
+        importBtn: 'Імпорт',
+        exportBtn: 'Експорт',
+        resetBtn: 'Скинути',
+        emptyBox: 'Нічого не знайдено',
+        syncPrefix: 'оновлено',
+        demoSyncStamp: 'демо-дані',
+        colWorkTitle: 'Робота · Vollzeit',
+        colAusbildungTitle: 'Ausbildung',
+        addWorkShort: '+ Робота',
+        addAusbildungShort: '+ Ausbildung',
+        statsText: (wAct, wRej, aAct, aRej) => `Робота: ${wAct} активних (${wRej} відмов) · Ausbildung: ${aAct} активних`,
+        stages: {
+          1: 'Не подано',
+          2: 'Заплановано',
+          3: 'Подано',
+          4: 'Є відповідь',
+          5: 'Перевірка',
+          6: 'Співбесіда',
+          7: 'Офер'
+        },
+        rejectedLabel: 'Відмова',
+        scheduledGmailStage: 'Заплановано в Gmail',
+        autoAddedScheduledNote: (at) => `Автододано з Gmail (Заплановано в Gmail${at ? ' · ' + at : ''}).`,
+        pulse: {
+          rejectedBadge: (d) => `Відмова${d ? ' · ' + d : ''}`,
+          rejectedAdvice: (d) => `Отримано відмову${d ? ' ' + d : ''}.`,
+          stage1Badge: 'Чернетка',
+          stage1Advice: 'Вакансія ще не відправлена — варто підготувати лист і податися.',
+          stage2Badge: 'Готово до відправки',
+          stage2Advice: 'Лист підготовлений — перевір деталі та відправ заявку.',
+          scheduledBadge: (at) => `Заплановано в Gmail${at ? ' · ' + at : ''}`,
+          scheduledAdvice: (at) => `Лист стоїть у відкладеній відправці Gmail${at ? ' (' + at + ')' : ''}. Після відправки автоматично перейде у «Подано».`,
+          autoReplyBadge: 'Отримано · Автопідтвердження',
+          autoReplyAdvice: (d, when) => `Отримано автоматичне підтвердження отримання${d ? ' ' + d : ''}${when ? ' (' + when + ')' : ''}. Живої відповіді HR ще немає.`,
+          interviewBadge: 'Співбесіда / Офер',
+          interviewAdvice: 'Активний етап інтерв’ю — готуйся до розмови!',
+          hrSilenceBadge: (days) => `Тиша ${days} дн. · нагадати`,
+          hrSilenceAdvice: (days, d) => `HR відповідав ${days} дн. тому (${d}). Можна ввічливо нагадати.`,
+          hrRepliedToday: 'HR відповів сьогодні',
+          hrRepliedYesterday: 'HR відповів вчора',
+          hrRepliedDays: (days) => `HR відповів · ${days} дн. тому`,
+          hrRepliedAdvice: (d, when) => `Останній контакт від HR: ${d} (${when}). Заявка в роботі.`,
+          remindedWaitBadge: (days) => `Нагадали · тиша ${days} дн.`,
+          remindedWaitAdvice: (d, days) => `Нагадування вже відправлено ${d} (${days} дн. тому). Чекаємо на відповідь.`,
+          silenceDueBadge: (days) => `Тиша ${days} дн. · час нагадати`,
+          silenceDueAdvice: (days, d) => `Минуло ${days} дн. з моменту подачі (${d}). Варто надіслати коротке нагадування.`,
+          sentToday: 'Відправлено сьогодні',
+          sentYesterday: 'Відправлено вчора',
+          todayWord: 'сьогодні',
+          yesterdayWord: 'вчора',
+          daysAgoWord: (days) => `${days} дн. тому`,
+          waitingBadge: (days) => `Очікуємо · ${days} дн.`,
+          waitingAdvice: (d, when) => `Подано ${d} (${when}). Поки рано нагадувати — даємо HR час на розгляд.`
+        },
+        detail: {
+          noEmail: 'Без e-mail',
+          openUrl: 'Сторінка вакансії ↗',
+          mailStatus: 'Статус пошти:',
+          touchMe: '✓ Я нагадав сьогодні',
+          touchHr: '✓ HR відповів сьогодні',
+          appliedDate: 'Дата подачі',
+          lastContactDate: 'Останній контакт',
+          notes: 'Коментар / Наступний крок',
+          notesPlaceholder: 'Коротко: що відповіли, коли нагадати або деталі...',
+          showEdit: '▸ Редагувати назву, e-mail, категорію або лист',
+          hideEdit: '▾ Сховати редагування полів і листа',
+          editCompany: 'Фірма',
+          editRole: 'Посада',
+          editCategory: 'Колонка',
+          betreff: 'Тема листа (Betreff)',
+          copyBetreff: 'Скопіювати тему',
+          letter: 'Супровідний лист (Anschreiben)',
+          copyLetter: 'Скопіювати текст',
+          deleteBtn: 'Видалити',
+          markReject: 'Позначити відмову',
+          unmarkReject: 'Зняти відмову',
+          doneBtn: 'Готово',
+          lastMailPrefix: 'Останній лист:'
+        },
+        add: {
+          title: 'Нова заявка',
+          subtitle: 'Обери колонку (Робота чи Ausbildung) та вкажи фірму',
+          category: 'Колонка *',
+          company: 'Фірма *',
+          companyPh: 'Наприклад: Acme Cloud GmbH',
+          role: 'Посада *',
+          rolePh: 'Наприклад: Junior AI Automation Engineer (m/w/d)',
+          stage: 'Статус',
+          s2: 'Заплановано',
+          s3: 'Подано',
+          s4: 'Є відповідь',
+          notes: 'Коментар (необов’язково)',
+          notesPh: 'Коротка нотатка...',
+          extraClosed: '▸ Додаткові поля (пошта, посилання, лист)',
+          extraOpen: '▾ Додаткові поля (пошта, посилання, лист)',
+          url: 'Посилання',
+          letter: 'Супровідний лист',
+          letterPh: 'Текст листа...',
+          cancel: 'Скасувати',
+          submit: 'Додати'
+        },
+        settings: {
+          title: 'Налаштування Gmail Sync',
+          subtitle: 'Google Apps Script Web App Endpoint',
+          hint: 'Залиш поля порожніми для локального демо-режиму або підключи власний Google Apps Script Web App, щоб автоматично підтягувати відповіді HR, автопідтвердження, відмови та заплановані листи з Gmail.',
+          resetDefault: 'Очистити',
+          save: 'Зберегти',
+          savedToast: 'Налаштування синхронізації збережено'
+        },
+        toasts: {
+          copied: (v) => `Скопійовано: ${v}`,
+          copiedSubject: 'Тему листа скопійовано',
+          copiedLetter: 'Текст листа скопійовано',
+          deleted: (code, comp) => `Видалено #${code} ${comp}`,
+          undo: 'Повернути',
+          added: (code, comp) => `Додано #${code} ${comp}`,
+          touchedMe: 'Зафіксовано нагадування сьогодні',
+          touchedHr: 'Зафіксовано відповідь HR сьогодні',
+          syncOk: (n) => `Gmail синхронізовано (${n} збігів)`,
+          syncOkWithNew: (n, added) => `Gmail синхронізовано (${n} збігів · +${added} заплановано)`,
+          demoSyncInfo: 'Демо-режим: локальні таймери оновлено (підключіть Gmail у налаштуваннях)',
+          syncErr: 'Не вдалося підключитися до Gmail API — перераховано локально',
+          savedJson: 'Збережено JSON',
+          imported: (n) => `Імпортовано ${n} заявок`,
+          importErr: 'Помилка читання JSON',
+          resetConfirm: (n) => `Відновити демо-список із ${n} заявок?`,
+          resetDone: 'Демо-список відновлено'
+        },
+        tooltips: {
+          note: 'Є нотатка',
+          copyEmail: (e) => `Скопіювати ${e}`,
+          openSite: 'Відкрити сайт',
+          deleteRow: 'Видалити заявку',
+          settings: 'Налаштування Gmail Sync'
+        }
+      }
+    };
+
+    const DEMO_LETTER_AUTOMATION = `Sehr geehrtes Recruiting-Team,
+
+mit großem Interesse bewerbe ich mich auf die Position als Junior AI & Workflow Automation Engineer (m/w/d). Besonders begeistert mich Ihr Fokus auf praktische KI-Agenten, API-Integrationen und schlanke interne Automatisierungen.
+
+Ich bringe ein abgeschlossenes IT-Fachkolleg im Bereich Software Engineering sowie ein laufendes, vollständig asynchron organisiertes Online-Bachelorstudium in Computer Science mit, sodass ich ab sofort in Vollzeit zur Verfügung stehe. Im Alltag arbeite ich intensiv mit Python, JavaScript, SQL, Git sowie modernen KI-Entwicklungswerkzeugen und Workflow-Plattformen (n8n, Make, LLM APIs, Webhooks).
+
+Über eine Einladung zu einem persönlichen Kennenlernen freue ich mich sehr!
+
+Mit freundlichen Grüßen
+Alex Lindner`;
+
+    const DEMO_LETTER_FRONTEND = `Hallo liebes Team,
+
+eure Stellenausschreibung als Junior Frontend & Web Developer (m/w/d) hat mich sofort angesprochen. Saubere Benutzeroberflächen, moderne Webstandards (HTML5, CSS3, JavaScript, TypeScript) und schnelle Iteration mit KI-gestützten Entwicklungs-Workflows passen genau zu meiner Arbeitsweise.
+
+Mein Lebenslauf sowie meine Zeugnisse liegen im Anhang bei. Ich freue mich auf ein kurzes Kennenlernen!
+
+Viele Grüße
+Alex Lindner`;
+
+    const DEFAULT_JOBS = [
+      // === LEFT COLUMN: FULL-TIME JOBS (DEMO DATA) ===
+      {
+        code: "01",
+        category: "work",
+        company: "ElbeFlow Digital GmbH",
+        role: "Junior AI & Workflow Automation Engineer (m/w/d)",
+        stage: 6,
+        rejected: false,
+        appliedDate: "2026-11-12",
+        lastContactDate: "2026-11-25",
+        lastContactBy: "hr",
+        email: "careers@elbeflow-demo.de",
+        syncQuery: "elbeflow-demo.de",
+        url: "https://example.com/careers/ai-automation",
+        location: "Dresden / Hybrid",
+        betreff: "Bewerbung als Junior AI & Workflow Automation Engineer (m/w/d)",
+        anschreiben: DEMO_LETTER_AUTOMATION,
+        notes: "Technical interview scheduled via Google Meet — prepare n8n & Python API demo.",
+        snippet: "Einladung zum Kennenlernen — Vielen Dank für Ihre Unterlagen! Gerne möchten wir Sie zu einem ersten Gespräch einladen..."
+      },
+      {
+        code: "02",
+        category: "work",
+        company: "NordicGrid Cloud AG",
+        role: "Junior Full-Stack & Internal Tools Developer (m/w/d)",
+        stage: 4,
+        rejected: false,
+        appliedDate: "2026-11-18",
+        lastContactDate: "2026-11-24",
+        lastContactBy: "hr",
+        email: "jobs@nordicgrid-demo.de",
+        syncQuery: "nordicgrid-demo.de",
+        url: "https://example.com/careers/fullstack",
+        location: "100% Remote (Germany)",
+        betreff: "Bewerbung als Junior Full-Stack & Internal Tools Developer (m/w/d)",
+        anschreiben: DEMO_LETTER_FRONTEND,
+        notes: "HR confirmed application is under review by the engineering lead.",
+        snippet: "Rückmeldung zu Ihrer Bewerbung — Ihre Unterlagen wurden an die Fachabteilung weitergeleitet..."
+      },
+      {
+        code: "03",
+        category: "work",
+        company: "Saxony Robotics & IoT Systems",
+        role: "Junior Linux / DevOps & Scripting Engineer (m/w/d)",
+        stage: 3,
+        rejected: false,
+        appliedDate: "2026-11-24",
+        lastContactDate: "2026-11-24",
+        lastContactBy: "auto",
+        autoReply: true,
+        email: "recruiting@saxony-iot-demo.de",
+        syncQuery: "saxony-iot-demo.de",
+        url: "https://example.com/careers/devops",
+        location: "Dresden",
+        betreff: "Bewerbung als Junior Linux / DevOps & Scripting Engineer (m/w/d)",
+        anschreiben: "",
+        notes: "Submitted via company portal; automatic receipt confirmation received.",
+        snippet: "Eingangsbestätigung — Vielen Dank für Ihre Bewerbung! Wir haben Ihre Unterlagen erhalten und prüfen diese zeitnah."
+      },
+      {
+        code: "04",
+        category: "work",
+        company: "NovaCraft Web Studio",
+        role: "Junior Frontend Developer – UI & Prototyping (m/w/d)",
+        stage: 3,
+        rejected: false,
+        appliedDate: "2026-11-14",
+        lastContactDate: "2026-11-14",
+        lastContactBy: "me",
+        email: "hello@novacraft-demo.de",
+        syncQuery: "novacraft-demo.de",
+        url: "https://example.com/careers/frontend",
+        location: "Dresden",
+        betreff: "Bewerbung als Junior Frontend Developer (m/w/d)",
+        anschreiben: DEMO_LETTER_FRONTEND,
+        notes: "12 days since submission — good candidate for a polite follow-up.",
+        snippet: ""
+      },
+      {
+        code: "05",
+        category: "work",
+        company: "DataPulse Analytics GmbH",
+        role: "Junior Python & Low-Code Integration Specialist (m/w/d)",
+        stage: 2,
+        gmailScheduled: true,
+        scheduledAt: "Tomorrow · 08:30",
+        rejected: false,
+        appliedDate: "",
+        lastContactDate: "",
+        lastContactBy: "scheduled",
+        email: "talent@datapulse-demo.de",
+        syncQuery: "datapulse-demo.de",
+        url: "https://example.com/careers/python-lowcode",
+        location: "100% Remote",
+        betreff: "Bewerbung als Junior Python & Low-Code Integration Specialist (m/w/d)",
+        anschreiben: DEMO_LETTER_AUTOMATION,
+        notes: "Queued in Gmail Scheduled Send for tomorrow morning.",
+        snippet: "Scheduled send: Bewerbung als Junior Python & Low-Code Integration Specialist..."
+      },
+      {
+        code: "06",
+        category: "work",
+        company: "AlpenFin Enterprise Software",
+        role: "Junior IT Consultant (m/w/d)",
+        stage: 3,
+        rejected: true,
+        appliedDate: "2026-11-08",
+        lastContactDate: "2026-11-19",
+        lastContactBy: "hr",
+        email: "hr@alpenfin-demo.de",
+        syncQuery: "alpenfin-demo.de",
+        url: "https://example.com/careers/consultant",
+        location: "100% Remote",
+        betreff: "Bewerbung als Junior IT Consultant (m/w/d)",
+        anschreiben: "",
+        notes: "Position required C2 German for client-facing consulting.",
+        snippet: "Ihre Bewerbung — Leider müssen wir Ihnen mitteilen, dass wir uns für andere Bewerber entschieden haben."
+      },
+
+      // === RIGHT COLUMN: AUSBILDUNG (DEMO DATA) ===
+      {
+        code: "A1",
+        category: "ausbildung",
+        company: "Dresden Cloud & Network Solutions",
+        role: "Ausbildung Fachinformatiker für Systemintegration (m/w/d)",
+        stage: 5,
+        rejected: false,
+        appliedDate: "2026-11-15",
+        lastContactDate: "2026-11-25",
+        lastContactBy: "hr",
+        email: "ausbildung@dresden-cloud-demo.de",
+        syncQuery: "dresden-cloud-demo.de",
+        url: "https://example.com/ausbildung/fisi",
+        location: "Dresden",
+        betreff: "Bewerbung: Ausbildung Fachinformatiker für Systemintegration (m/w/d)",
+        anschreiben: "",
+        notes: "Invited to online aptitude assessment (valid for 14 days).",
+        snippet: "Einladung zum nächsten Auswahlschritt — Wir möchten Sie besser kennenlernen und laden Sie herzlich zu unserem Online-Verfahren ein."
+      },
+      {
+        code: "A2",
+        category: "ausbildung",
+        company: "SachsenTech Mobility AG",
+        role: "Ausbildung Fachinformatiker Anwendungsentwicklung (m/w/d)",
+        stage: 3,
+        rejected: false,
+        appliedDate: "2026-11-22",
+        lastContactDate: "2026-11-22",
+        lastContactBy: "auto",
+        autoReply: true,
+        email: "karriere@sachsentech-demo.de",
+        syncQuery: "sachsentech-demo.de",
+        url: "https://example.com/ausbildung/fiae",
+        location: "Dresden",
+        betreff: "Bewerbung: Ausbildung Fachinformatiker Anwendungsentwicklung (m/w/d)",
+        anschreiben: "",
+        notes: "Application confirmed via ATS portal.",
+        snippet: "Empfangsbestätigung Ihrer Bewerbung — Vielen Dank für die Zusendung Ihrer Bewerbungsunterlagen."
+      },
+      {
+        code: "A3",
+        category: "ausbildung",
+        company: "MedCampus IT Services Dresden",
+        role: "Ausbildung Fachinformatiker für Systemintegration (m/w/d)",
+        stage: 3,
+        rejected: false,
+        appliedDate: "2026-11-23",
+        lastContactDate: "2026-11-23",
+        lastContactBy: "auto",
+        autoReply: true,
+        email: "recruiting@medcampus-demo.de",
+        syncQuery: "medcampus-demo.de",
+        url: "https://example.com/ausbildung/medcampus",
+        location: "Dresden",
+        betreff: "Bewerbung: Ausbildung Fachinformatiker für Systemintegration (m/w/d)",
+        anschreiben: "",
+        notes: "Confirmation received; waiting for HR screening.",
+        snippet: "Vielen Dank für Ihre Bewerbung — Ihre Unterlagen sind erfolgreich bei uns eingegangen."
+      }
+    ];
+
+    let jobs = [];
+    let currentLang = 'en';
+    let searchQuery = '';
+    let activeCode = null;
+    let lastDeleted = null;
+    let toastTimer = null;
+    let selectedNewStage = 3;
+    let selectedNewCategory = 'work';
+
+    function t() {
+      return I18N[currentLang] || I18N.en;
+    }
+
+    function todayISO() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function formatShortDate(iso) {
+      if (!iso) return '';
+      const parts = iso.split('-');
+      if (parts.length !== 3) return iso;
+      return `${parts[2]}.${parts[1]}`;
+    }
+
+    function daysBetween(isoDate) {
+      if (!isoDate) return 0;
+      const target = new Date(isoDate + 'T00:00:00');
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return Math.max(0, Math.round((today - target) / (1000 * 60 * 60 * 24)));
+    }
+
+    function getSyncConfig() {
+      try {
+        const raw = localStorage.getItem(SYNC_CFG_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed.url === 'string') {
+            return {
+              url: parsed.url.trim(),
+              key: (parsed.key || '').trim()
+            };
+          }
+        }
+      } catch (e) {}
+      return { ...DEFAULT_SYNC_CFG };
+    }
+
+    function saveSyncConfig(cfg) {
+      try {
+        localStorage.setItem(SYNC_CFG_KEY, JSON.stringify(cfg));
+      } catch (e) {}
+    }
+
+    function inferCategory(job) {
+      if (job.category === 'ausbildung' || job.category === 'work') return job.category;
+      if (String(job.code || '').toUpperCase().startsWith('A')) return 'ausbildung';
+      if (/ausbildung|azubi/i.test(`${job.role || ''} ${job.company || ''}`)) return 'ausbildung';
+      return 'work';
+    }
+
+    function normalizeJobs(list) {
+      if (!Array.isArray(list)) return [];
+      list.forEach(j => {
+        if (j) j.category = inferCategory(j);
+      });
+      return list;
+    }
+
+    function cleanCompanyCore(name) {
+      return String(name || '')
+        .replace(/\([^)]*\)/g, ' ')
+        .replace(/\b(gmbh|ag|mbh|ggmbh|ug|kg|ohg|se|e\.v\.|ltd|inc\.?|co\.?)\b/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function extractJobTerms(job) {
+      const terms = [];
+      const add = (val) => {
+        const v = String(val || '').trim();
+        if (!v || v.length < 2) return;
+        if (!terms.some(t => t.toLowerCase() === v.toLowerCase())) {
+          terms.push(v);
+        }
+      };
+
+      if (job.email && job.email.includes('@')) {
+        const em = job.email.trim().toLowerCase();
+        const dom = em.split('@')[1].trim();
+        add(dom);
+        add(em);
+      }
+
+      if (job.syncQuery && job.syncQuery.trim()) {
+        const sq = job.syncQuery.trim();
+        const firstToken = sq.split(/\s+/)[0];
+        if (firstToken && firstToken.includes('.')) add(firstToken);
+        else add(sq);
+      }
+
+      if (Array.isArray(job.aliases)) {
+        job.aliases.forEach(add);
+      }
+
+      if (job.url) {
+        try {
+          const host = new URL(job.url).hostname.replace(/^www\./, '');
+          if (host && !/example\.com|arbeitsagentur|stepstone|indeed|xing|linkedin|personio/i.test(host)) {
+            add(host);
+          }
+        } catch (e) {}
+      }
+
+      const comp = String(job.company || '').trim();
+      if (comp) {
+        const parens = comp.match(/\(([^)]{2,40})\)/g);
+        if (parens) {
+          parens.forEach(p => add(p.slice(1, -1).trim()));
+        }
+        const core = cleanCompanyCore(comp);
+        if (core && core.length >= 3) add(core);
+        const firstWord = core.split(/\s+/)[0];
+        if (firstWord && firstWord.length >= 4 && !/^(the|die|der|das|media|digital|software|tech|systems|ausbildung)$/i.test(firstWord)) {
+          add(firstWord);
+        }
+      }
+
+      return terms;
+    }
+
+    function buildJobSyncDescriptors(list) {
+      const companyCounts = {};
+      list.forEach(j => {
+        const k = cleanCompanyCore(j.company).toLowerCase();
+        if (k) companyCounts[k] = (companyCounts[k] || 0) + 1;
+      });
+
+      return list
+        .filter(j => extractJobTerms(j).length > 0)
+        .map(j => {
+          const terms = extractJobTerms(j);
+          const coreKey = cleanCompanyCore(j.company).toLowerCase();
+          let roleHint = '';
+          const excludeHints = [];
+
+          if (companyCounts[coreKey] > 1) {
+            if (j.syncQuery && j.syncQuery.trim().includes(' ')) {
+              roleHint = j.syncQuery.trim().split(/\s+/).slice(1).join(' ');
+            } else if (j.role) {
+              roleHint = j.role.split(/[–—(|]/)[0].trim().split(/\s+/).slice(0, 2).join(' ');
+            }
+            list.forEach(other => {
+              if (other.code !== j.code && cleanCompanyCore(other.company).toLowerCase() === coreKey) {
+                const otherHint = (other.syncQuery && other.syncQuery.trim().includes(' '))
+                  ? other.syncQuery.trim().split(/\s+/).slice(1).join(' ')
+                  : (other.role || '').split(/[–—(|]/)[0].trim();
+                if (otherHint && otherHint.toLowerCase() !== roleHint.toLowerCase()) {
+                  excludeHints.push(otherHint);
+                }
+              }
+            });
+          }
+
+          return {
+            key: j.code,
+            terms,
+            searchTerms: terms.slice(0, 5),
+            roleHint,
+            excludeHints,
+            appliedDate: j.appliedDate || ''
+          };
+        });
+    }
+
+    function detectExplicitRejection(text) {
+      if (!text) return false;
+      const sanitized = String(text)
+        .toLowerCase()
+        .replace(/leider\s+(erkrankt|krank|im\s+urlaub|abwesend|verhindert|unterwegs)/gi, ' ')
+        .replace(/unfortunately[,\s]+(?:i\s+(?:was|am)|we\s+(?:were|are))\s+(?:sick|ill|out\s+of\s+office|away|on\s+vacation|delayed)/gi, ' ');
+
+      const strictPatterns = [
+        'absage',
+        'absagen müssen',
+        'abzusagen',
+        'bedauerlicherweise muss ich',
+        'bedauerlicherweise müssen wir',
+        'muss ich ihnen leider mitteilen',
+        'müssen wir ihnen leider mitteilen',
+        'müssen wir dir leider mitteilen',
+        'leider müssen wir ihnen mitteilen',
+        'leider müssen wir dir mitteilen',
+        'leider muss ich ihnen mitteilen',
+        'nicht berücksichtigen',
+        'nicht weiter berücksichtigen',
+        'anderweitig entschieden',
+        'anderweitig vergeben',
+        'nicht in die engere',
+        'nicht weiter verfolgen',
+        'nicht weiterverfolgen',
+        'keine zusage',
+        'keinen positiven bescheid',
+        'leider können wir sie',
+        'leider können wir dich',
+        'leider nicht zu einem',
+        'stellenbesetzung anders entschieden',
+        'unfortunately',
+        'rejection',
+        'regret to inform',
+        'not move forward',
+        'not moving forward',
+        'unable to offer',
+        'decided not to proceed',
+        'other candidates',
+        'will not be proceeding',
+        'not been selected',
+        'cannot offer you'
+      ];
+      return strictPatterns.some(p => sanitized.includes(p));
+    }
+
+    function detectAutoReply(text) {
+      if (!text) return false;
+      const low = String(text).toLowerCase();
+      const autoPatterns = [
+        'automatic reply',
+        'auto-reply',
+        'autoreply',
+        'automatische antwort',
+        'confirm that we have received your document',
+        'confirm that we have received your application',
+        'confirm receipt of your',
+        'we herewith confirm that we have received',
+        'we have received your application',
+        'thank you for your application',
+        'danke für deine bewerbung',
+        'vielen dank für ihre bewerbung',
+        'vielen dank für deine bewerbung',
+        'vielen dank für die zusendung ihrer bewerbungsunterlagen',
+        'bestätigen wir ihnen den systemtechnischen eingang',
+        'wir freuen uns über ihre bewerbung',
+        'eingangsbestätigung',
+        'empfangsbestätigung',
+        'bestätigung des eingangs',
+        'automatisch generierte nachricht',
+        'automatisch erstellte nachricht',
+        'automatische bestätigung',
+        'bitte antworten sie nicht auf diese',
+        'do not reply to this email',
+        'this is an automated',
+        'wurde übermittelt',
+        'out of office',
+        'abwesenheitsnotiz'
+      ];
+      return autoPatterns.some(p => low.includes(p));
+    }
+
+    function scheduledItemMatchesJob(item, job) {
+      const hay = `${item.toEmail || ''} ${item.toDomain || ''} ${item.toDisplay || ''} ${item.subject || ''} ${item.snippet || ''}`.toLowerCase();
+      if (job.email && item.toEmail && job.email.trim().toLowerCase() === item.toEmail.trim().toLowerCase()) {
+        return true;
+      }
+      const terms = extractJobTerms(job);
+      for (const rawTok of terms) {
+        const tok = rawTok.toLowerCase().trim();
+        if (!tok || tok.length < 2) continue;
+        if (tok.includes('@') || tok.includes('.') || tok.includes('&')) {
+          if (hay.includes(tok)) return true;
+        } else if (tok.length <= 5 || tok.includes(' ')) {
+          const escaped = tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          if (new RegExp(`(^|[^a-z0-9äöüß])${escaped}([^a-z0-9äöüß]|$)`, 'i').test(hay)) return true;
+        } else if (hay.includes(tok)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function evaluateJobPulse(job) {
+      const tr = t().pulse;
+
+      if (job.rejected) {
+        const dStr = job.lastContactDate ? formatShortDate(job.lastContactDate) : '';
+        return {
+          type: 'rejected',
+          badge: tr.rejectedBadge(dStr),
+          advice: tr.rejectedAdvice(dStr)
+        };
+      }
+
+      if (job.gmailScheduled && job.stage <= 2) {
+        return {
+          type: 'scheduled',
+          badge: tr.scheduledBadge(job.scheduledAt || ''),
+          advice: tr.scheduledAdvice(job.scheduledAt || '')
+        };
+      }
+
+      if (job.stage === 1) {
+        return {
+          type: 'action-due',
+          badge: tr.stage1Badge,
+          advice: tr.stage1Advice
+        };
+      }
+
+      if (job.stage === 2) {
+        return {
+          type: 'action-due',
+          badge: tr.stage2Badge,
+          advice: tr.stage2Advice
+        };
+      }
+
+      const refDate = job.lastContactDate || job.appliedDate;
+      const days = daysBetween(refDate);
+
+      if (job.stage >= 6) {
+        return {
+          type: 'hr-replied',
+          badge: tr.interviewBadge,
+          advice: tr.interviewAdvice
+        };
+      }
+
+      if (job.lastContactBy === 'hr' && job.stage >= 4) {
+        if (days >= 14) {
+          return {
+            type: 'action-due',
+            badge: tr.hrSilenceBadge(days),
+            advice: tr.hrSilenceAdvice(days, formatShortDate(refDate))
+          };
+        }
+        let badge = tr.hrRepliedDays(days);
+        let whenWord = tr.daysAgoWord(days);
+        if (days === 0) {
+          badge = tr.hrRepliedToday;
+          whenWord = tr.todayWord;
+        } else if (days === 1) {
+          badge = tr.hrRepliedYesterday;
+          whenWord = tr.yesterdayWord;
+        }
+        return {
+          type: 'hr-replied',
+          badge,
+          advice: tr.hrRepliedAdvice(formatShortDate(refDate), whenWord)
+        };
+      }
+
+      if (days >= 10) {
+        if (job.appliedDate && job.lastContactDate && job.appliedDate !== job.lastContactDate && job.lastContactBy === 'me') {
+          return {
+            type: 'waiting',
+            badge: tr.remindedWaitBadge(days),
+            advice: tr.remindedWaitAdvice(formatShortDate(job.lastContactDate), days)
+          };
+        }
+        return {
+          type: 'action-due',
+          badge: tr.silenceDueBadge(days),
+          advice: tr.silenceDueAdvice(days, formatShortDate(refDate))
+        };
+      }
+
+      if (job.lastContactBy === 'auto' || job.autoReply) {
+        let whenWord = tr.daysAgoWord(days);
+        if (days === 0) whenWord = tr.todayWord;
+        else if (days === 1) whenWord = tr.yesterdayWord;
+        return {
+          type: 'auto-reply',
+          badge: tr.autoReplyBadge,
+          advice: tr.autoReplyAdvice(formatShortDate(refDate), whenWord)
+        };
+      }
+
+      let badge = tr.waitingBadge(days);
+      let whenWord = tr.daysAgoWord(days);
+      if (days === 0) {
+        badge = tr.sentToday;
+        whenWord = tr.todayWord;
+      } else if (days === 1) {
+        badge = tr.sentYesterday;
+        whenWord = tr.yesterdayWord;
+      }
+      return {
+        type: 'waiting',
+        badge,
+        advice: tr.waitingAdvice(formatShortDate(refDate), whenWord)
+      };
+    }
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) return normalizeJobs(parsed);
+        }
+      } catch (e) {}
+      const fresh = normalizeJobs(JSON.parse(JSON.stringify(DEFAULT_JOBS)));
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh)); } catch (e) {}
+      return fresh;
+    }
+
+    function saveData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+      } catch (e) {}
+    }
+
+    function loadLang() {
+      try {
+        const saved = localStorage.getItem(LANG_KEY);
+        if (saved && I18N[saved]) return saved;
+      } catch (e) {}
+      return 'en';
+    }
+
+    function saveLang(lang) {
+      try {
+        localStorage.setItem(LANG_KEY, lang);
+      } catch (e) {}
+    }
+
+    function updateSyncLabel() {
+      const saved = localStorage.getItem(SYNC_DATE_KEY);
+      const label = saved || t().demoSyncStamp;
+      document.getElementById('syncTag').textContent = `${t().syncPrefix}: ${label}`;
+    }
+
+    function applyLanguage() {
+      const tr = t();
+      document.documentElement.lang = currentLang === 'ua' ? 'uk' : currentLang;
+      document.getElementById('appTitle').textContent = tr.appTitle;
+      document.getElementById('searchInput').placeholder = tr.searchPlaceholder;
+      document.getElementById('lblRefresh').textContent = tr.refresh;
+      document.getElementById('btnOpenAdd').textContent = tr.addBtn;
+      document.getElementById('btnOpenSettings').title = tr.tooltips.settings;
+      document.getElementById('btnImport').textContent = tr.importBtn;
+      document.getElementById('btnExport').textContent = tr.exportBtn;
+      document.getElementById('btnReset').textContent = tr.resetBtn;
+
+      document.getElementById('colWorkTitle').textContent = tr.colWorkTitle;
+      document.getElementById('colAusbildungTitle').textContent = tr.colAusbildungTitle;
+      document.getElementById('btnAddWork').textContent = tr.addWorkShort;
+      document.getElementById('btnAddAusbildung').textContent = tr.addAusbildungShort;
+      document.getElementById('emptyWorkBox').textContent = tr.emptyBox;
+      document.getElementById('emptyAusbildungBox').textContent = tr.emptyBox;
+
+      document.getElementById('mUrl').textContent = tr.detail.openUrl;
+      document.getElementById('lblMailStatus').textContent = tr.detail.mailStatus;
+      document.getElementById('btnTouchMe').textContent = tr.detail.touchMe;
+      document.getElementById('btnTouchHr').textContent = tr.detail.touchHr;
+      document.getElementById('lblAppliedDate').textContent = tr.detail.appliedDate;
+      document.getElementById('lblLastContactDate').textContent = tr.detail.lastContactDate;
+      document.getElementById('lblNotes').textContent = tr.detail.notes;
+      document.getElementById('mNotes').placeholder = tr.detail.notesPlaceholder;
+      document.getElementById('lblEditCompany').textContent = tr.detail.editCompany;
+      document.getElementById('lblEditRole').textContent = tr.detail.editRole;
+      document.getElementById('lblEditCategory').textContent = tr.detail.editCategory;
+      document.getElementById('optCatWork').textContent = tr.colWorkTitle;
+      document.getElementById('optCatAusbildung').textContent = tr.colAusbildungTitle;
+      document.getElementById('lblBetreff').textContent = tr.detail.betreff;
+      document.getElementById('btnCopyBetreff').textContent = tr.detail.copyBetreff;
+      document.getElementById('lblLetter').textContent = tr.detail.letter;
+      document.getElementById('btnCopyLetter').textContent = tr.detail.copyLetter;
+      document.getElementById('mDeleteBtn').textContent = tr.detail.deleteBtn;
+      document.getElementById('mDoneBtn').textContent = tr.detail.doneBtn;
+
+      document.getElementById('lblAddTitle').textContent = tr.add.title;
+      document.getElementById('lblAddSubtitle').textContent = tr.add.subtitle;
+      document.getElementById('lblNewCategory').textContent = tr.add.category;
+      document.getElementById('lblCatBtnWork').textContent = tr.colWorkTitle;
+      document.getElementById('lblCatBtnAusbildung').textContent = tr.colAusbildungTitle;
+      document.getElementById('lblNewCompany').textContent = tr.add.company;
+      document.getElementById('newCompany').placeholder = tr.add.companyPh;
+      document.getElementById('lblNewRole').textContent = tr.add.role;
+      document.getElementById('newRole').placeholder = tr.add.rolePh;
+      document.getElementById('lblNewStage').textContent = tr.add.stage;
+      document.getElementById('lblStageBtn2').textContent = tr.add.s2;
+      document.getElementById('lblStageBtn3').textContent = tr.add.s3;
+      document.getElementById('lblStageBtn4').textContent = tr.add.s4;
+      document.getElementById('lblNewNotes').textContent = tr.add.notes;
+      document.getElementById('newNotes').placeholder = tr.add.notesPh;
+      document.getElementById('lblNewUrl').textContent = tr.add.url;
+      document.getElementById('lblNewLetter').textContent = tr.add.letter;
+      document.getElementById('newLetter').placeholder = tr.add.letterPh;
+      document.getElementById('addCancelBtn').textContent = tr.add.cancel;
+      document.getElementById('addSubmitBtn').textContent = tr.add.submit;
+      document.getElementById('btnToggleExtraAdd').textContent =
+        document.getElementById('extraAddFields').classList.contains('open') ? tr.add.extraOpen : tr.add.extraClosed;
+
+      document.getElementById('lblSettingsTitle').textContent = tr.settings.title;
+      document.getElementById('lblSettingsSubtitle').textContent = tr.settings.subtitle;
+      document.getElementById('lblSettingsHint').textContent = tr.settings.hint;
+      document.getElementById('cfgResetBtn').textContent = tr.settings.resetDefault;
+      document.getElementById('cfgSaveBtn').textContent = tr.settings.save;
+      document.getElementById('toastUndo').textContent = tr.toasts.undo;
+
+      document.querySelectorAll('#langSwitch .lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === currentLang);
+      });
+
+      updateSyncLabel();
+      renderList();
+      if (activeCode) openDetailModal(activeCode, true);
+    }
+
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function showToast(msg, withUndo = false) {
+      const bar = document.getElementById('toastBar');
+      const txt = document.getElementById('toastText');
+      const undoBtn = document.getElementById('toastUndo');
+      txt.textContent = msg;
+      undoBtn.textContent = t().toasts.undo;
+      undoBtn.style.display = withUndo ? 'inline-block' : 'none';
+      bar.classList.add('visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        bar.classList.remove('visible');
+      }, 4200);
+    }
+
+    function copyText(text, label) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => showToast(label));
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast(label);
+      }
+    }
+
+    function updateMetrics() {
+      let workActive = 0;
+      let workRej = 0;
+      let ausActive = 0;
+      let ausRej = 0;
+
+      jobs.forEach(j => {
+        const cat = inferCategory(j);
+        if (cat === 'ausbildung') {
+          if (j.rejected) ausRej++;
+          else ausActive++;
+        } else {
+          if (j.rejected) workRej++;
+          else workActive++;
+        }
+      });
+
+      document.getElementById('statsText').textContent = t().statsText(workActive, workRej, ausActive, ausRej);
+      document.getElementById('colWorkCount').textContent = String(workActive + workRej);
+      document.getElementById('colAusbildungCount').textContent = String(ausActive + ausRej);
+    }
+
+    function renderCardHtml(j) {
+      const tr = t();
+      const stMeta = STAGE_META[j.stage] || STAGE_META[1];
+      const stName = tr.stages[j.stage] || tr.stages[1];
+      const pulse = evaluateJobPulse(j);
+      const isGmailScheduled = !j.rejected && Boolean(j.gmailScheduled) && j.stage <= 2;
+      const isAusbildung = inferCategory(j) === 'ausbildung';
+      const labelColor = j.rejected
+        ? 'var(--rejected)'
+        : (isGmailScheduled ? 'var(--scheduled)' : stMeta.color);
+      const labelText = j.rejected
+        ? tr.rejectedLabel
+        : (isGmailScheduled ? tr.scheduledGmailStage : stName);
+      const pctText = j.rejected ? '—' : (isGmailScheduled ? '35%' : `${stMeta.pct}%`);
+
+      let segsHtml = '';
+      for (let i = 1; i <= 7; i++) {
+        let bg = 'rgba(255, 255, 255, 0.06)';
+        if (!j.rejected) {
+          if (isGmailScheduled) {
+            if (i <= 2) bg = 'var(--scheduled)';
+            else if (i === 3) bg = 'linear-gradient(90deg, var(--scheduled) 50%, rgba(255, 255, 255, 0.06) 50%)';
+          } else if (i <= j.stage) {
+            bg = stMeta.color;
+          }
+        }
+        segsHtml += `<div class="bar-seg" data-step="${i}" title="${esc(tr.stages[i])} (${STAGE_META[i].pct}%)" style="background: ${bg}"></div>`;
+      }
+
+      const hasNote = j.notes && j.notes.trim().length > 0;
+      const hasSnippet = j.snippet && j.snippet.trim().length > 0;
+
+      return `
+        <div class="job-row ${isAusbildung ? 'ausbildung-card' : ''} ${j.rejected ? 'is-rejected' : ''}" data-code="${esc(j.code)}">
+          <div class="card-top-line">
+            <div class="card-title-left">
+              <span class="row-code">#${esc(j.code)}</span>
+              <span class="company-name">${esc(j.company)}</span>
+              ${hasNote ? `<span class="note-indicator" title="${esc(tr.tooltips.note)}"></span>` : ''}
+            </div>
+            <div class="card-top-right">
+              <span class="pulse-tag ${pulse.type}" title="${esc(pulse.advice)}">${esc(pulse.badge)}</span>
+              <div class="row-actions" data-stop-row="true">
+                ${j.email ? `
+                  <button type="button" class="icon-btn act-email" data-email="${esc(j.email)}" title="${esc(tr.tooltips.copyEmail(j.email))}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+                  </button>` : ''}
+                ${j.url ? `
+                  <a href="${esc(j.url)}" target="_blank" rel="noopener noreferrer" class="icon-btn" title="${esc(tr.tooltips.openSite)}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M9 7h8v8"/></svg>
+                  </a>` : ''}
+                <button type="button" class="icon-btn delete-btn act-delete" data-code="${esc(j.code)}" title="${esc(tr.tooltips.deleteRow)}">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-bottom-line">
+            <div class="identity-sub">
+              <div class="role-line">${esc(j.role)}</div>
+              ${hasSnippet ? `<div class="snippet-line" title="${esc(j.snippet)}">${esc(j.snippet)}</div>` : ''}
+            </div>
+            <div class="stage-cell" data-stop-row="true">
+              <div class="stage-meta">
+                <span class="stage-label" style="color: ${labelColor}">${esc(labelText)}</span>
+                <span class="stage-pct">${pctText}</span>
+              </div>
+              <div class="bar-segments">${segsHtml}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderList() {
+      const q = searchQuery.toLowerCase().trim();
+      const filtered = jobs.filter(j => {
+        if (!q) return true;
+        const hay = `${j.code} ${j.company} ${j.role} ${j.location || ''} ${j.notes || ''} ${j.snippet || ''}`.toLowerCase();
+        return hay.includes(q);
+      });
+
+      const workItems = filtered.filter(j => inferCategory(j) === 'work');
+      const ausbildungItems = filtered.filter(j => inferCategory(j) === 'ausbildung');
+
+      document.getElementById('workList').innerHTML = workItems.map(renderCardHtml).join('');
+      document.getElementById('ausbildungList').innerHTML = ausbildungItems.map(renderCardHtml).join('');
+
+      document.getElementById('emptyWorkBox').style.display = workItems.length === 0 ? 'block' : 'none';
+      document.getElementById('emptyAusbildungBox').style.display = ausbildungItems.length === 0 ? 'block' : 'none';
+
+      updateMetrics();
+    }
+
+    function setStage(code, step) {
+      const job = jobs.find(j => j.code === code);
+      if (!job) return;
+      job.stage = step;
+      job.rejected = false;
+      if (step >= 3) {
+        job.gmailScheduled = false;
+      }
+      if (step >= 4) {
+        job.lastContactBy = 'hr';
+        job.autoReply = false;
+        job.manualHrTouch = true;
+      } else if (step <= 3) {
+        job.manualHrTouch = false;
+      }
+      saveData();
+      renderList();
+    }
+
+    function deleteJob(code) {
+      const idx = jobs.findIndex(j => j.code === code);
+      if (idx === -1) return;
+      lastDeleted = { item: jobs[idx], index: idx };
+      jobs.splice(idx, 1);
+      saveData();
+      if (activeCode === code) closeDetailModal();
+      renderList();
+      showToast(t().toasts.deleted(lastDeleted.item.code, lastDeleted.item.company), true);
+    }
+
+    function undoDelete() {
+      if (!lastDeleted) return;
+      jobs.splice(lastDeleted.index, 0, lastDeleted.item);
+      lastDeleted = null;
+      saveData();
+      renderList();
+      document.getElementById('toastBar').classList.remove('visible');
+    }
+
+    function getNextCode(category = 'work') {
+      if (category === 'ausbildung') {
+        let maxA = 0;
+        jobs.forEach(j => {
+          const m = String(j.code || '').match(/^A(\d+)$/i);
+          if (m) {
+            const n = parseInt(m[1], 10);
+            if (!isNaN(n) && n > maxA) maxA = n;
+          }
+        });
+        return `A${maxA + 1}`;
+      }
+      let maxNum = 0;
+      jobs.forEach(j => {
+        if (/^\d+$/.test(String(j.code || ''))) {
+          const n = parseInt(j.code, 10);
+          if (!isNaN(n) && n > maxNum) maxNum = n;
+        }
+      });
+      return String(maxNum + 1).padStart(2, '0');
+    }
+
+    function openDetailModal(code, preserveToggleState = false) {
+      const job = jobs.find(j => j.code === code);
+      if (!job) return;
+      const tr = t();
+      activeCode = code;
+
+      const pulse = evaluateJobPulse(job);
+      document.getElementById('mCode').textContent = `#${job.code}`;
+      document.getElementById('mCompany').textContent = job.company;
+      document.getElementById('mRole').textContent = job.role;
+      document.getElementById('mLocation').textContent = job.location || 'Dresden';
+      document.getElementById('mEmailText').textContent = job.email || tr.detail.noEmail;
+      document.getElementById('mUrl').href = job.url || '#';
+      document.getElementById('mUrl').style.display = job.url ? 'inline-flex' : 'none';
+
+      document.getElementById('mSmartSummary').textContent = pulse.advice;
+      const snippetBox = document.getElementById('mSnippetBox');
+      if (job.snippet && job.snippet.trim()) {
+        snippetBox.textContent = `${tr.detail.lastMailPrefix} ${job.snippet}`;
+        snippetBox.classList.add('visible');
+      } else {
+        snippetBox.textContent = '';
+        snippetBox.classList.remove('visible');
+      }
+
+      document.getElementById('mAppliedDate').value = job.appliedDate || '';
+      document.getElementById('mLastContactDate').value = job.lastContactDate || '';
+      document.getElementById('mEditCompany').value = job.company || '';
+      document.getElementById('mEditRole').value = job.role || '';
+      document.getElementById('mEditEmail').value = job.email || '';
+      document.getElementById('mEditCategory').value = inferCategory(job);
+      document.getElementById('mBetreff').value = job.betreff || '';
+      document.getElementById('mLetter').value = job.anschreiben || '';
+      document.getElementById('mNotes').value = job.notes || '';
+      document.getElementById('mRejectBtn').textContent = job.rejected ? tr.detail.unmarkReject : tr.detail.markReject;
+
+      if (!preserveToggleState) {
+        document.getElementById('detailEditWrap').classList.remove('open');
+      }
+      const editOpen = document.getElementById('detailEditWrap').classList.contains('open');
+      document.getElementById('btnToggleDetailEdit').textContent = editOpen ? tr.detail.hideEdit : tr.detail.showEdit;
+
+      document.getElementById('detailModal').classList.add('open');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModal').classList.remove('open');
+      activeCode = null;
+    }
+
+    function setAddCategoryUI(cat) {
+      selectedNewCategory = cat === 'ausbildung' ? 'ausbildung' : 'work';
+      document.querySelectorAll('#newCategoryGroup .stage-radio-btn').forEach(b => {
+        const isMatch = b.dataset.cat === selectedNewCategory;
+        b.classList.toggle('active', isMatch);
+        b.classList.toggle('ausbildung-active', isMatch && selectedNewCategory === 'ausbildung');
+      });
+    }
+
+    function openAddModal(defaultCategory = 'work') {
+      const tr = t();
+      document.getElementById('addForm').reset();
+      selectedNewStage = 3;
+      setAddCategoryUI(defaultCategory);
+      document.querySelectorAll('#newStageGroup .stage-radio-btn').forEach(b => {
+        b.classList.toggle('active', Number(b.dataset.val) === 3);
+      });
+      document.getElementById('extraAddFields').classList.remove('open');
+      document.getElementById('btnToggleExtraAdd').textContent = tr.add.extraClosed;
+      document.getElementById('addModal').classList.add('open');
+      setTimeout(() => document.getElementById('newCompany').focus(), 50);
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.remove('open');
+    }
+
+    function openSettingsModal() {
+      const cfg = getSyncConfig();
+      document.getElementById('cfgUrl').value = cfg.url;
+      document.getElementById('cfgKey').value = cfg.key;
+      document.getElementById('settingsModal').classList.add('open');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('open');
+    }
+
+    async function syncWithGmail() {
+      const tr = t();
+      const btn = document.getElementById('btnRefresh');
+      const lbl = document.getElementById('lblRefresh');
+      const cfg = getSyncConfig();
+
+      // If no external Google Apps Script endpoint is configured, recalculate locally in demo mode
+      if (!cfg.url) {
+        const now = new Date();
+        const stamp = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')} · ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        localStorage.setItem(SYNC_DATE_KEY, stamp);
+        updateSyncLabel();
+        renderList();
+        showToast(tr.toasts.demoSyncInfo);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.classList.add('spinning');
+      lbl.textContent = tr.refreshing;
+
+      try {
+        const descriptors = buildJobSyncDescriptors(jobs);
+        const jobsJson = JSON.stringify(descriptors);
+        const getUrl = `${cfg.url}?key=${encodeURIComponent(cfg.key)}&cutoff=${encodeURIComponent(GMAIL_DATE_CUTOFF)}&jobs=${encodeURIComponent(jobsJson)}`;
+
+        let response;
+        if (getUrl.length <= 6500) {
+          response = await fetch(getUrl, { method: 'GET', redirect: 'follow' });
+        } else {
+          response = await fetch(cfg.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ key: cfg.key, cutoff: GMAIL_DATE_CUTOFF, jobs: descriptors }),
+            redirect: 'follow'
+          });
+        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const payload = await response.json();
+        if (payload.error) throw new Error(payload.error);
+
+        const data = payload.data || {};
+        const scheduledItems = Array.isArray(payload.scheduled) ? payload.scheduled : [];
+        let matched = 0;
+
+        jobs.forEach(j => {
+          const res = data[j.code];
+          if (!res) {
+            if (j.gmailScheduled && !scheduledItems.some(s => scheduledItemMatchesJob(s, j))) {
+              j.gmailScheduled = false;
+              j.scheduledAt = '';
+            }
+            return;
+          }
+          matched++;
+
+          if (res.appliedDate && (!j.appliedDate || res.appliedDate < j.appliedDate || !j.rejected)) {
+            j.appliedDate = res.appliedDate;
+          }
+          if (res.snippet) j.snippet = res.snippet;
+
+          if (j.rejected) {
+            j.gmailScheduled = false;
+            return;
+          }
+
+          const isRejected = Boolean(res.rejected) || detectExplicitRejection(res.snippet);
+          const isLiveHr = Boolean(res.hasLiveHrReply) && !isRejected;
+          const isAuto = !isRejected && !isLiveHr && res.lastContactBy !== 'me' && (Boolean(res.autoReply) || res.lastContactBy === 'auto' || detectAutoReply(res.snippet));
+          const isSent = Boolean(res.sent) || Boolean(res.appliedDate);
+          const isScheduled = Boolean(res.scheduled) && !isSent;
+
+          if (isRejected) {
+            j.rejected = true;
+            j.gmailScheduled = false;
+            j.autoReply = false;
+            j.lastContactBy = 'hr';
+            if (res.rejectedDate || res.lastContactDate) {
+              j.lastContactDate = res.rejectedDate || res.lastContactDate;
+            }
+            return;
+          }
+
+          if (isLiveHr) {
+            j.gmailScheduled = false;
+            j.scheduledAt = '';
+            j.autoReply = false;
+            j.lastContactBy = res.lastContactBy === 'me' ? 'me' : 'hr';
+            if (res.lastContactDate) j.lastContactDate = res.lastContactDate;
+            if (j.stage < 4) j.stage = 4;
+          } else if (isAuto) {
+            j.gmailScheduled = false;
+            j.scheduledAt = '';
+            j.autoReply = true;
+            j.lastContactBy = 'auto';
+            if (res.lastContactDate) j.lastContactDate = res.lastContactDate;
+            if (j.stage < 3) j.stage = 3;
+            if (j.stage === 4 && !j.manualHrTouch) j.stage = 3;
+          } else if (isSent) {
+            j.gmailScheduled = false;
+            j.scheduledAt = '';
+            j.autoReply = false;
+            j.lastContactBy = res.lastContactBy || 'me';
+            if (res.lastContactDate) j.lastContactDate = res.lastContactDate;
+            if (j.stage < 3) j.stage = 3;
+          } else if (isScheduled) {
+            j.gmailScheduled = true;
+            j.scheduledAt = res.scheduledAt || '';
+            j.autoReply = false;
+            j.lastContactBy = 'scheduled';
+            if (j.stage < 2) j.stage = 2;
+          } else if (j.gmailScheduled) {
+            j.gmailScheduled = false;
+            j.scheduledAt = '';
+          }
+        });
+
+        let autoAdded = 0;
+        scheduledItems.forEach(item => {
+          if (!item || !item.isApplication) return;
+          const alreadyExists = jobs.some(j => scheduledItemMatchesJob(item, j));
+          if (alreadyExists) return;
+
+          const isAus = /ausbildung|azubi/i.test(`${item.subject || ''} ${item.inferredRole || ''}`);
+          const cat = isAus ? 'ausbildung' : 'work';
+          const code = getNextCode(cat);
+          const company = item.inferredCompany || item.toDisplay || item.toDomain || 'New Company';
+          const role = item.inferredRole || item.subject || 'Bewerbung';
+          jobs.push({
+            code,
+            category: cat,
+            company,
+            role,
+            stage: 2,
+            gmailScheduled: true,
+            scheduledAt: item.scheduledAt || '',
+            autoReply: false,
+            rejected: false,
+            appliedDate: '',
+            lastContactDate: '',
+            lastContactBy: 'scheduled',
+            email: item.toEmail || '',
+            syncQuery: item.toDomain || company,
+            aliases: [item.toEmail, item.toDomain, company].filter(Boolean),
+            url: '',
+            location: 'Remote / Germany',
+            betreff: item.subject || '',
+            anschreiben: '',
+            notes: tr.autoAddedScheduledNote(item.scheduledAt || ''),
+            snippet: item.snippet || ''
+          });
+          autoAdded++;
+        });
+
+        const stamp = payload.updatedAt || (() => {
+          const now = new Date();
+          return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')} · ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        })();
+
+        localStorage.setItem(SYNC_DATE_KEY, stamp);
+        saveData();
+        updateSyncLabel();
+        renderList();
+        showToast(autoAdded > 0 ? tr.toasts.syncOkWithNew(matched, autoAdded) : tr.toasts.syncOk(matched));
+      } catch (err) {
+        renderList();
+        showToast(tr.toasts.syncErr);
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('spinning');
+        lbl.textContent = t().refresh;
+      }
+    }
+
+    function handleBoardClick(e) {
+      const seg = e.target.closest('.bar-seg');
+      if (seg) {
+        const row = seg.closest('.job-row');
+        setStage(row.dataset.code, Number(seg.dataset.step));
+        return;
+      }
+
+      const emailBtn = e.target.closest('.act-email');
+      if (emailBtn) {
+        copyText(emailBtn.dataset.email, t().toasts.copied(emailBtn.dataset.email));
+        return;
+      }
+
+      const delBtn = e.target.closest('.act-delete');
+      if (delBtn) {
+        deleteJob(delBtn.dataset.code);
+        return;
+      }
+
+      if (e.target.closest('[data-stop-row]')) return;
+
+      const row = e.target.closest('.job-row');
+      if (row) openDetailModal(row.dataset.code);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      jobs = loadData();
+      currentLang = loadLang();
+      applyLanguage();
+
+      document.getElementById('langSwitch').addEventListener('click', (e) => {
+        const btn = e.target.closest('.lang-btn');
+        if (!btn) return;
+        const nextLang = btn.dataset.lang;
+        if (!nextLang || !I18N[nextLang]) return;
+        currentLang = nextLang;
+        saveLang(currentLang);
+        applyLanguage();
+      });
+
+      document.getElementById('workList').addEventListener('click', handleBoardClick);
+      document.getElementById('ausbildungList').addEventListener('click', handleBoardClick);
+
+      document.getElementById('btnRefresh').addEventListener('click', syncWithGmail);
+
+      document.getElementById('btnOpenSettings').addEventListener('click', openSettingsModal);
+      document.getElementById('settingsClose').addEventListener('click', closeSettingsModal);
+      document.getElementById('settingsModal').addEventListener('click', (e) => {
+        if (e.target.id === 'settingsModal') closeSettingsModal();
+      });
+      document.getElementById('cfgResetBtn').addEventListener('click', () => {
+        document.getElementById('cfgUrl').value = '';
+        document.getElementById('cfgKey').value = '';
+      });
+      document.getElementById('cfgSaveBtn').addEventListener('click', () => {
+        const url = document.getElementById('cfgUrl').value.trim();
+        const key = document.getElementById('cfgKey').value.trim();
+        saveSyncConfig({ url, key });
+        closeSettingsModal();
+        showToast(t().settings.savedToast);
+      });
+
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        renderList();
+      });
+
+      document.getElementById('toastUndo').addEventListener('click', undoDelete);
+
+      document.getElementById('mClose').addEventListener('click', closeDetailModal);
+      document.getElementById('mDoneBtn').addEventListener('click', closeDetailModal);
+      document.getElementById('detailModal').addEventListener('click', (e) => {
+        if (e.target.id === 'detailModal') closeDetailModal();
+      });
+
+      document.getElementById('btnOpenAdd').addEventListener('click', () => openAddModal('work'));
+      document.getElementById('btnAddWork').addEventListener('click', () => openAddModal('work'));
+      document.getElementById('btnAddAusbildung').addEventListener('click', () => openAddModal('ausbildung'));
+      document.getElementById('addClose').addEventListener('click', closeAddModal);
+      document.getElementById('addCancelBtn').addEventListener('click', closeAddModal);
+      document.getElementById('addModal').addEventListener('click', (e) => {
+        if (e.target.id === 'addModal') closeAddModal();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeDetailModal();
+          closeAddModal();
+          closeSettingsModal();
+        }
+      });
+
+      document.getElementById('newCategoryGroup').addEventListener('click', (e) => {
+        const btn = e.target.closest('.stage-radio-btn');
+        if (!btn) return;
+        setAddCategoryUI(btn.dataset.cat);
+      });
+
+      document.getElementById('newStageGroup').addEventListener('click', (e) => {
+        const btn = e.target.closest('.stage-radio-btn');
+        if (!btn) return;
+        selectedNewStage = Number(btn.dataset.val);
+        document.querySelectorAll('#newStageGroup .stage-radio-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+
+      document.getElementById('btnToggleExtraAdd').addEventListener('click', () => {
+        const tr = t();
+        const wrap = document.getElementById('extraAddFields');
+        const isOpen = wrap.classList.toggle('open');
+        document.getElementById('btnToggleExtraAdd').textContent = isOpen ? tr.add.extraOpen : tr.add.extraClosed;
+      });
+
+      document.getElementById('btnToggleDetailEdit').addEventListener('click', () => {
+        const tr = t();
+        const wrap = document.getElementById('detailEditWrap');
+        const isOpen = wrap.classList.toggle('open');
+        document.getElementById('btnToggleDetailEdit').textContent = isOpen ? tr.detail.hideEdit : tr.detail.showEdit;
+      });
+
+      document.getElementById('addForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const company = document.getElementById('newCompany').value.trim();
+        const role = document.getElementById('newRole').value.trim();
+        if (!company || !role) return;
+
+        const code = getNextCode(selectedNewCategory);
+        const today = todayISO();
+        const rawEmail = document.getElementById('newEmail').value.trim();
+        const domain = rawEmail.includes('@') ? rawEmail.split('@')[1].trim() : '';
+
+        const newJob = {
+          code,
+          category: selectedNewCategory,
+          company,
+          role,
+          stage: selectedNewStage,
+          rejected: false,
+          appliedDate: selectedNewStage >= 3 ? today : '',
+          lastContactDate: selectedNewStage >= 3 ? today : '',
+          lastContactBy: selectedNewStage >= 4 ? 'hr' : 'me',
+          email: rawEmail,
+          syncQuery: domain || company,
+          aliases: [rawEmail, domain, company].filter(Boolean),
+          url: document.getElementById('newUrl').value.trim(),
+          location: 'Remote / Germany',
+          betreff: `Bewerbung als ${role}`,
+          anschreiben: document.getElementById('newLetter').value,
+          notes: document.getElementById('newNotes').value.trim(),
+          snippet: ''
+        };
+
+        jobs.push(newJob);
+        saveData();
+        closeAddModal();
+        renderList();
+        showToast(t().toasts.added(code, company));
+      });
+
+      document.getElementById('btnTouchMe').addEventListener('click', () => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (!job) return;
+        const today = todayISO();
+        job.lastContactDate = today;
+        job.lastContactBy = 'me';
+        job.gmailScheduled = false;
+        job.autoReply = false;
+        if (job.stage < 3) job.stage = 3;
+        saveData();
+        openDetailModal(activeCode, true);
+        renderList();
+        showToast(t().toasts.touchedMe);
+      });
+
+      document.getElementById('btnTouchHr').addEventListener('click', () => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (!job) return;
+        const today = todayISO();
+        job.lastContactDate = today;
+        job.lastContactBy = 'hr';
+        job.rejected = false;
+        job.gmailScheduled = false;
+        job.autoReply = false;
+        job.manualHrTouch = true;
+        if (job.stage < 4) job.stage = 4;
+        saveData();
+        openDetailModal(activeCode, true);
+        renderList();
+        showToast(t().toasts.touchedHr);
+      });
+
+      document.getElementById('mAppliedDate').addEventListener('change', (e) => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (!job) return;
+        job.appliedDate = e.target.value;
+        saveData();
+        openDetailModal(activeCode, true);
+        renderList();
+      });
+
+      document.getElementById('mLastContactDate').addEventListener('change', (e) => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (!job) return;
+        job.lastContactDate = e.target.value;
+        saveData();
+        openDetailModal(activeCode, true);
+        renderList();
+      });
+
+      document.getElementById('mEditCompany').addEventListener('input', (e) => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (!job) return;
+        job.company = e.target.value;
+        document.getElementById('mCompany').textContent = job.company;
+        saveData();
+        renderList();
+      });
+
+      document.getElementById('mEditRole').addEventListener('input', (e) => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (!job) return;
+        job.role = e.target.value;
+        document.getElementById('mRole').textContent = job.role;
+        saveData();
+        renderList();
+      });
+
+      document.getElementById('mEditEmail').addEventListener('input', (e) => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (!job) return;
+        const val = e.target.value.trim();
+        job.email = val;
+        if (val.includes('@')) {
+          const dom = val.split('@')[1].trim();
+          job.syncQuery = dom;
+          job.aliases = Array.from(new Set([...(job.aliases || []), val, dom, job.company].filter(Boolean)));
+        } else if (val) {
+          job.syncQuery = val;
+          job.aliases = Array.from(new Set([...(job.aliases || []), val, job.company].filter(Boolean)));
+        }
+        document.getElementById('mEmailText').textContent = val || t().detail.noEmail;
+        saveData();
+        renderList();
+      });
+
+      document.getElementById('mEditCategory').addEventListener('change', (e) => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (!job) return;
+        job.category = e.target.value === 'ausbildung' ? 'ausbildung' : 'work';
+        saveData();
+        renderList();
+      });
+
+      document.getElementById('mCopyEmail').addEventListener('click', () => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (job && job.email) copyText(job.email, t().toasts.copied(job.email));
+      });
+
+      document.getElementById('btnCopyBetreff').addEventListener('click', () => {
+        const val = document.getElementById('mBetreff').value;
+        if (val) copyText(val, t().toasts.copiedSubject);
+      });
+
+      document.getElementById('btnCopyLetter').addEventListener('click', () => {
+        const val = document.getElementById('mLetter').value;
+        if (val) copyText(val, t().toasts.copiedLetter);
+      });
+
+      document.getElementById('mBetreff').addEventListener('input', (e) => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (job) {
+          job.betreff = e.target.value;
+          saveData();
+        }
+      });
+
+      document.getElementById('mLetter').addEventListener('input', (e) => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (job) {
+          job.anschreiben = e.target.value;
+          saveData();
+        }
+      });
+
+      document.getElementById('mNotes').addEventListener('input', (e) => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (job) {
+          job.notes = e.target.value;
+          saveData();
+          renderList();
+        }
+      });
+
+      document.getElementById('mRejectBtn').addEventListener('click', () => {
+        const job = jobs.find(j => j.code === activeCode);
+        if (!job) return;
+        job.rejected = !job.rejected;
+        saveData();
+        openDetailModal(activeCode, true);
+        renderList();
+      });
+
+      document.getElementById('mDeleteBtn').addEventListener('click', () => {
+        if (activeCode) deleteJob(activeCode);
+      });
+
+      document.getElementById('btnExport').addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `application_tracker_${todayISO()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(t().toasts.savedJson);
+      });
+
+      document.getElementById('btnImport').addEventListener('click', () => {
+        document.getElementById('importFileInput').click();
+      });
+
+      document.getElementById('importFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            if (Array.isArray(parsed)) {
+              jobs = normalizeJobs(parsed);
+              saveData();
+              renderList();
+              showToast(t().toasts.imported(jobs.length));
+            }
+          } catch (err) {
+            showToast(t().toasts.importErr);
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      });
+
+      document.getElementById('btnReset').addEventListener('click', () => {
+        if (confirm(t().toasts.resetConfirm(DEFAULT_JOBS.length))) {
+          jobs = normalizeJobs(JSON.parse(JSON.stringify(DEFAULT_JOBS)));
+          saveData();
+          renderList();
+          showToast(t().toasts.resetDone);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
